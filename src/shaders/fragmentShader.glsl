@@ -267,10 +267,10 @@ void main() {
   float fresnel = pow(1.0 - max(dot(nor, viewDir), 0.0), 4.0);
   vec3 fresnelColor = vec3(0.95, 0.95, 0.97) * fresnel * 0.4 * uHighlight;
 
-  // Fake environment reflection
+  // Fake environment reflection (lighter, less black)
   vec3 reflDir = reflect(-viewDir, nor);
-  float envReflect = smoothstep(-0.3, 1.0, reflDir.y) * 0.12;
-  vec3 envColor = mix(vec3(0.82, 0.82, 0.84), vec3(1.0), envReflect);
+  float envReflect = smoothstep(-0.2, 1.0, reflDir.y) * 0.18;
+  vec3 envColor = mix(vec3(0.92, 0.92, 0.94), vec3(1.0), envReflect);
 
   // Subsurface scattering
   float sss = pow(max(dot(viewDir, -lightPos1), 0.0), 3.0) * 0.06;
@@ -285,7 +285,7 @@ void main() {
   // Combine with lifted floor so crevices between blobs aren't fully black
   float lighting = 0.45 + 0.55 * (ao * shadow);
   vec3 color = diffuse * lighting + specular * shadow + fresnelColor + vec3(sss);
-  color = mix(color, envColor, fresnel * 0.25);
+  color = mix(color, envColor, fresnel * 0.18);
   color += specular * audioIntensity * 0.2;
 
   // Tone mapping
