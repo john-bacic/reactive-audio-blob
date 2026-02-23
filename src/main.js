@@ -126,7 +126,9 @@ scrubber.addEventListener('change', () => {
 });
 
 // Control defaults
+const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
 const controls = {
+  zoom: 1,
   blobCount: 4,
   blobSize: 0.8,
   mergeStrength: 0.7,
@@ -150,6 +152,7 @@ function bindSlider(id, key) {
   });
 }
 
+bindSlider('zoom', 'zoom');
 bindSlider('blobCount', 'blobCount');
 bindSlider('blobSize', 'blobSize');
 bindSlider('mergeStrength', 'mergeStrength');
@@ -158,6 +161,15 @@ bindSlider('deformation', 'deformation');
 bindSlider('glossiness', 'glossiness');
 bindSlider('spread', 'spread');
 bindSlider('sensitivity', 'sensitivity');
+
+function updateZoomFromGesture(value) {
+  const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
+  controls.zoom = z;
+  const slider = document.getElementById('zoom');
+  const valueEl = document.getElementById('zoomValue');
+  if (slider) slider.value = z;
+  if (valueEl) valueEl.textContent = z.toFixed(2);
+}
 
 // Three.js setup - fullscreen quad for raymarching
 const scene = new THREE.Scene();
@@ -179,8 +191,9 @@ const material = new THREE.ShaderMaterial({
       window.innerWidth * Math.min(window.devicePixelRatio, 2),
       window.innerHeight * Math.min(window.devicePixelRatio, 2)
     )},
-    uPan: { value: new THREE.Vector2(0, 0) },
-    uBass: { value: 0 },
+  uPan: { value: new THREE.Vector2(0, 0) },
+  uZoom: { value: 1 },
+  uBass: { value: 0 },
     uMid: { value: 0 },
     uHigh: { value: 0 },
     uBlobCount: { value: controls.blobCount },
@@ -198,27 +211,53 @@ const material = new THREE.ShaderMaterial({
 const quad = new THREE.Mesh(quadGeometry, material);
 scene.add(quad);
 
-// Touch/mouse drag to pan blobs; tap on blob area closes sidebar
+// Touch/mouse drag to pan blobs; two-finger pinch to zoom; tap to close sidebar
 const container = document.getElementById('container');
 const TAP_THRESHOLD_PX = 10;
 let isDragging = false;
+let isPinching = false;
 let lastClientX = 0;
 let lastClientY = 0;
 let pointerDownX = 0;
 let pointerDownY = 0;
+let pinchStartDist = 0;
+let pinchStartZoom = 1;
+
+function touchDistance(touches) {
+  if (!touches || touches.length < 2) return 0;
+  return Math.hypot(touches[1].clientX - touches[0].clientX, touches[1].clientY - touches[0].clientY);
+}
 
 function onPointerDown(e) {
   if (e.target !== container) return;
+  const touches = e.touches;
+  if (touches && touches.length === 2) {
+    isPinching = true;
+    isDragging = false;
+    pinchStartDist = touchDistance(touches);
+    pinchStartZoom = controls.zoom;
+    return;
+  }
   isDragging = true;
-  const x = e.clientX ?? e.touches[0].clientX;
-  const y = e.clientY ?? e.touches[0].clientY;
+  isPinching = false;
+  const x = e.clientX ?? touches?.[0]?.clientX;
+  const y = e.clientY ?? touches?.[0]?.clientY;
   lastClientX = pointerDownX = x;
   lastClientY = pointerDownY = y;
 }
 function onPointerMove(e) {
+  const touches = e.touches;
+  if (touches && touches.length === 2) {
+    if (isPinching && pinchStartDist > 0) {
+      const d = touchDistance(touches);
+      const scale = d / pinchStartDist;
+      updateZoomFromGesture(pinchStartZoom * scale);
+    }
+    return;
+  }
   if (!isDragging) return;
-  const clientX = e.clientX ?? e.touches[0].clientX;
-  const clientY = e.clientY ?? e.touches[0].clientY;
+  const clientX = e.clientX ?? touches?.[0]?.clientX;
+  const clientY = e.clientY ?? touches?.[0]?.clientY;
   const h = window.innerHeight;
   pan.x += (clientX - lastClientX) / h;
   pan.y -= (clientY - lastClientY) / h;
@@ -227,7 +266,9 @@ function onPointerMove(e) {
   material.uniforms.uPan.value.set(pan.x, pan.y);
 }
 function onPointerUp(e) {
-  if (sidebar && !sidebar.classList.contains('is-hidden')) {
+  const touches = e.touches;
+  if (touches && touches.length >= 2) return;
+  if (sidebar && !sidebar.classList.contains('is-hidden') && !isPinching) {
     const x = e.changedTouches?.[0]?.clientX ?? e.clientX;
     const y = e.changedTouches?.[0]?.clientY ?? e.clientY;
     if (x != null && y != null && Math.hypot(x - pointerDownX, y - pointerDownY) < TAP_THRESHOLD_PX) {
@@ -235,12 +276,13 @@ function onPointerUp(e) {
     }
   }
   isDragging = false;
+  isPinching = false;
 }
 container.addEventListener('mousedown', onPointerDown);
 container.addEventListener('touchstart', onPointerDown, { passive: true });
 window.addEventListener('mousemove', onPointerMove);
 window.addEventListener('touchmove', (e) => {
-  if (isDragging) e.preventDefault();
+  if (e.touches.length === 2 || isDragging) e.preventDefault();
   onPointerMove(e);
 }, { passive: false });
 window.addEventListener('mouseup', onPointerUp);
@@ -302,6 +344,7 @@ function animate() {
   material.uniforms.uDeformation.value = controls.deformation;
   material.uniforms.uGlossiness.value = controls.glossiness;
   material.uniforms.uSpread.value = controls.spread;
+  material.uniforms.uZoom.value = controls.zoom;
 
   renderer.render(scene, camera);
 }

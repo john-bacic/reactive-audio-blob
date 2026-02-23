@@ -17,6 +17,7 @@ uniform float uAnimSpeed;
 uniform float uDeformation;
 uniform float uGlossiness;
 uniform float uSpread;
+uniform float uZoom;
 
 // Smooth minimum for metaball blending
 float smin(float a, float b, float k) {
@@ -182,6 +183,7 @@ float calcAO(vec3 pos, vec3 nor) {
 
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y + uPan;
+  uv /= max(uZoom, 0.01);
 
   // Camera setup
   vec3 ro = vec3(0.0, 0.3, 5.5);  // ray origin
