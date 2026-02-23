@@ -18,6 +18,18 @@ uniform float uDeformation;
 uniform float uGlossiness;
 uniform float uSpread;
 uniform float uZoom;
+uniform float uBaseHue;
+uniform float uBaseSat;
+uniform float uBaseLight;
+uniform float uShadow;
+uniform float uHighlight;
+
+// HSL to RGB (h,s,l in 0-1)
+vec3 hsl2rgb(vec3 c) {
+  vec3 K = vec3(1.0, 2.0/3.0, 1.0/3.0);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - 3.0);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
 
 // Smooth minimum for metaball blending
 float smin(float a, float b, float k) {
@@ -226,8 +238,8 @@ void main() {
   vec3 lightPos2 = normalize(vec3(-3.0, 2.0, -1.0));
   vec3 lightPos3 = normalize(vec3(0.5, -1.0, 3.0));
 
-  // Base color - glossy white
-  vec3 baseColor = vec3(0.92, 0.92, 0.93);
+  // Base color from HSL
+  vec3 baseColor = hsl2rgb(vec3(uBaseHue, uBaseSat, uBaseLight));
 
   // Subtle audio tint
   float audioIntensity = (uBass + uMid + uHigh) / 3.0;
@@ -237,9 +249,10 @@ void main() {
   float diff1 = max(dot(nor, lightPos1), 0.0) * 0.5 + 0.5;
   float diff2 = max(dot(nor, lightPos2), 0.0) * 0.3 + 0.3;
   float diff3 = max(dot(nor, lightPos3), 0.0);
-  vec3 diffuse = baseColor * (diff1 * 0.55 + diff2 * 0.25 + diff3 * 0.15);
+  float diffMix = diff1 * 0.55 + diff2 * 0.25 + diff3 * 0.15;
+  vec3 diffuse = baseColor * diffMix;
 
-  // Specular (Blinn-Phong)
+  // Specular (Blinn-Phong) scaled by uHighlight
   float shininess = 40.0 + uGlossiness * 160.0;
   vec3 h1 = normalize(lightPos1 + viewDir);
   vec3 h2 = normalize(lightPos2 + viewDir);
@@ -247,11 +260,11 @@ void main() {
   float spec1 = pow(max(dot(nor, h1), 0.0), shininess) * 1.2;
   float spec2 = pow(max(dot(nor, h2), 0.0), shininess * 0.7) * 0.5;
   float spec3 = pow(max(dot(nor, h3), 0.0), shininess * 0.5) * 0.3;
-  vec3 specular = vec3(1.0) * (spec1 + spec2 + spec3) * (0.3 + uGlossiness * 0.7);
+  vec3 specular = vec3(1.0) * (spec1 + spec2 + spec3) * (0.3 + uGlossiness * 0.7) * uHighlight;
 
-  // Fresnel
+  // Fresnel scaled by uHighlight
   float fresnel = pow(1.0 - max(dot(nor, viewDir), 0.0), 4.0);
-  vec3 fresnelColor = vec3(0.95, 0.95, 0.97) * fresnel * 0.4;
+  vec3 fresnelColor = vec3(0.95, 0.95, 0.97) * fresnel * 0.4 * uHighlight;
 
   // Fake environment reflection
   vec3 reflDir = reflect(-viewDir, nor);
@@ -264,9 +277,9 @@ void main() {
   // AO
   float ao = calcAO(pos, nor);
 
-  // Soft shadow from main light
+  // Soft shadow from main light (darker when uShadow higher)
   float shadow = softShadow(pos + nor * 0.01, lightPos1, 0.02, 5.0, 16.0);
-  shadow = shadow * 0.5 + 0.5;  // soften
+  shadow = mix(shadow * 0.5 + 0.5, shadow, uShadow * 0.5 + 0.5);
 
   // Combine
   vec3 color = diffuse * ao * shadow + specular * shadow + fresnelColor + vec3(sss);

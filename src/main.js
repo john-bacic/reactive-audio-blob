@@ -140,6 +140,11 @@ const controls = {
   glossiness: 0.7,
   spread: 2.0,
   sensitivity: 2.0,
+  baseHue: 0.5,
+  baseSat: 0,
+  baseLight: 0.92,
+  shadow: 0.5,
+  highlight: 0.7,
 };
 
 // Bind sliders to controls
@@ -164,6 +169,11 @@ bindSlider('deformation', 'deformation');
 bindSlider('glossiness', 'glossiness');
 bindSlider('spread', 'spread');
 bindSlider('sensitivity', 'sensitivity');
+bindSlider('baseHue', 'baseHue');
+bindSlider('baseSat', 'baseSat');
+bindSlider('baseLight', 'baseLight');
+bindSlider('shadow', 'shadow');
+bindSlider('highlight', 'highlight');
 
 function syncZoomSliderToControl() {
   const z = controls.zoom;
@@ -214,6 +224,11 @@ const material = new THREE.ShaderMaterial({
     uDeformation: { value: controls.deformation },
     uGlossiness: { value: controls.glossiness },
     uSpread: { value: controls.spread },
+    uBaseHue: { value: controls.baseHue },
+    uBaseSat: { value: controls.baseSat },
+    uBaseLight: { value: controls.baseLight },
+    uShadow: { value: controls.shadow },
+    uHighlight: { value: controls.highlight },
   },
   vertexShader,
   fragmentShader,
@@ -356,6 +371,11 @@ function animate() {
   material.uniforms.uGlossiness.value = controls.glossiness;
   material.uniforms.uSpread.value = controls.spread;
   material.uniforms.uZoom.value = controls.zoom;
+  material.uniforms.uBaseHue.value = controls.baseHue;
+  material.uniforms.uBaseSat.value = controls.baseSat;
+  material.uniforms.uBaseLight.value = controls.baseLight;
+  material.uniforms.uShadow.value = controls.shadow;
+  material.uniforms.uHighlight.value = controls.highlight;
 
   renderer.render(scene, camera);
 }
