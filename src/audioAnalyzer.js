@@ -12,15 +12,12 @@ export class AudioAnalyzer {
     this.bass = 0;
     this.mid = 0;
     this.high = 0;
-    this.bassPeak = 0;
-    this.bassPulse = 0;
+    this.envelope = 0;
 
     this.smoothingFactor = 0.4;
-    this.bassSmoothingFactor = 0.55;
-    this.bassPeakDecay = 0.88;
-    this.bassPulseDecay = 0.86;
-    this.transientThresholdBase = 0.05;
-    this.transientSensitivity = 1.5;
+    this.bassSmoothingFactor = 0.4;
+    this.pulseAttackCoeff = 0.85;
+    this.pulseReleaseCoeff = 0.12;
     this.prevBass = 0;
     this.prevMid = 0;
     this.prevHigh = 0;
@@ -58,7 +55,7 @@ export class AudioAnalyzer {
   _createAnalyser() {
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = this.fftSize;
-    this.analyser.smoothingTimeConstant = 0.35;
+    this.analyser.smoothingTimeConstant = 0.2;
     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
   }
 
@@ -194,16 +191,13 @@ export class AudioAnalyzer {
     this.mid = this.smoothingFactor * this.prevMid + (1 - this.smoothingFactor) * midAvg;
     this.high = this.smoothingFactor * this.prevHigh + (1 - this.smoothingFactor) * highAvg;
 
-    this.bassPeak = Math.max(this.bass, this.bassPeak * this.bassPeakDecay);
-
-    const deltaBass = this.bass - this.prevBass;
-    const sens = Math.max(0.2, this.transientSensitivity);
-    const thresh = this.transientThresholdBase / sens;
-    if (deltaBass >= thresh && this.bass > 0.04) {
-      const punch = Math.min(1, 0.35 + deltaBass * 2.2 * sens);
-      this.bassPulse = Math.max(this.bassPulse, punch);
+    const b = Math.min(1, this.bass * 1.3);
+    if (b >= this.envelope) {
+      this.envelope += (b - this.envelope) * this.pulseAttackCoeff;
+    } else {
+      this.envelope += (b - this.envelope) * this.pulseReleaseCoeff;
     }
-    this.bassPulse *= this.bassPulseDecay;
+    this.envelope = Math.max(0, Math.min(1, this.envelope));
 
     this.prevBass = this.bass;
     this.prevMid = this.mid;
@@ -211,7 +205,7 @@ export class AudioAnalyzer {
   }
 
   getFrequencyData() {
-    const drive = Math.max(this.bassPeak, this.bassPulse);
+    const drive = Math.min(1, this.envelope * 1.25);
     return {
       bass: this.bass,
       bassPeak: drive,
@@ -224,8 +218,7 @@ export class AudioAnalyzer {
     this._disconnectAll();
 
     this.bass = 0;
-    this.bassPeak = 0;
-    this.bassPulse = 0;
+    this.envelope = 0;
     this.mid = 0;
     this.high = 0;
     this.prevBass = 0;

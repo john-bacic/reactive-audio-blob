@@ -149,7 +149,8 @@ const controls = {
   glossiness: 0.7,
   spread: 2.0,
   sensitivity: 2.0,
-  transientSensitivity: 1.5,
+  pulseAttack: 0.85,
+  pulseRelease: 0.35,
   baseHue: 0.5,
   baseSat: 0,
   baseLight: 0.92,
@@ -184,7 +185,8 @@ bindSlider('deformation', 'deformation');
 bindSlider('glossiness', 'glossiness');
 bindSlider('spread', 'spread');
 bindSlider('sensitivity', 'sensitivity');
-bindSlider('transientSensitivity', 'transientSensitivity');
+bindSlider('pulseAttack', 'pulseAttack');
+bindSlider('pulseRelease', 'pulseRelease');
 bindSlider('baseHue', 'baseHue');
 bindSlider('baseSat', 'baseSat');
 bindSlider('baseLight', 'baseLight');
@@ -404,7 +406,8 @@ function animate() {
 
   // Audio
   if (isAudioActive) {
-    audioAnalyzer.transientSensitivity = controls.transientSensitivity;
+    audioAnalyzer.pulseAttackCoeff = 0.2 + 0.75 * controls.pulseAttack;
+    audioAnalyzer.pulseReleaseCoeff = 0.03 + 0.45 * (1 - controls.pulseRelease);
     audioAnalyzer.update();
     const { bass, bassPeak, mid, high } = audioAnalyzer.getFrequencyData();
 
