@@ -28,12 +28,31 @@ body {
   min-height: 100dvh;
   min-height: -webkit-fill-available;
   z-index: 1;
-  pointer-events: none;
+  pointer-events: auto;
+  touch-action: none;
 }
 
 canvas {
   display: block;
   pointer-events: none;
+}
+
+/* Tap outside sidebar to close */
+.sidebar-backdrop {
+  position: fixed;
+  left: 220px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 98;
+  pointer-events: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.panel:not(.is-hidden) ~ .sidebar-backdrop {
+  pointer-events: auto;
+}
+@media (max-width: 600px) {
+  .sidebar-backdrop { left: 260px; }
 }
 
 /* Sidebar toggle – bottom left */

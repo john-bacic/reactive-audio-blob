@@ -4,6 +4,7 @@ varying vec2 vUv;
 
 uniform float uTime;
 uniform vec2 uResolution;
+uniform vec2 uPan;
 uniform float uBass;
 uniform float uMid;
 uniform float uHigh;
@@ -180,7 +181,7 @@ float calcAO(vec3 pos, vec3 nor) {
 }
 
 void main() {
-  vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y + uPan;
 
   // Camera setup
   vec3 ro = vec3(0.0, 0.3, 5.5);  // ray origin

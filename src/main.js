@@ -15,6 +15,12 @@ if (sidebar && sidebarToggle) {
   if (isMobile()) sidebar.classList.add('is-hidden');
   sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('is-hidden'));
 }
+const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+if (sidebarBackdrop && sidebar) {
+  sidebarBackdrop.addEventListener('click', () => {
+    if (!sidebar.classList.contains('is-hidden')) sidebar.classList.add('is-hidden');
+  });
+}
 
 const gitCommitEl = document.getElementById('gitCommit');
 const buildCommit = typeof __GIT_COMMIT__ !== 'undefined' && __GIT_COMMIT__ ? __GIT_COMMIT__ : '';
@@ -165,6 +171,7 @@ document.getElementById('container').appendChild(renderer.domElement);
 // Fullscreen quad geometry
 const quadGeometry = new THREE.PlaneGeometry(2, 2);
 
+const pan = { x: 0, y: 0 };
 const material = new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
@@ -172,6 +179,7 @@ const material = new THREE.ShaderMaterial({
       window.innerWidth * Math.min(window.devicePixelRatio, 2),
       window.innerHeight * Math.min(window.devicePixelRatio, 2)
     )},
+    uPan: { value: new THREE.Vector2(0, 0) },
     uBass: { value: 0 },
     uMid: { value: 0 },
     uHigh: { value: 0 },
@@ -189,6 +197,43 @@ const material = new THREE.ShaderMaterial({
 
 const quad = new THREE.Mesh(quadGeometry, material);
 scene.add(quad);
+
+// Touch/mouse drag to pan blobs
+const container = document.getElementById('container');
+let isDragging = false;
+let lastClientX = 0;
+let lastClientY = 0;
+
+function onPointerDown(e) {
+  if (e.target !== container) return;
+  isDragging = true;
+  lastClientX = e.clientX ?? e.touches[0].clientX;
+  lastClientY = e.clientY ?? e.touches[0].clientY;
+}
+function onPointerMove(e) {
+  if (!isDragging) return;
+  const clientX = e.clientX ?? e.touches[0].clientX;
+  const clientY = e.clientY ?? e.touches[0].clientY;
+  const h = window.innerHeight;
+  pan.x += (clientX - lastClientX) / h;
+  pan.y -= (clientY - lastClientY) / h;
+  lastClientX = clientX;
+  lastClientY = clientY;
+  material.uniforms.uPan.value.set(pan.x, pan.y);
+}
+function onPointerUp() {
+  isDragging = false;
+}
+container.addEventListener('mousedown', onPointerDown);
+container.addEventListener('touchstart', onPointerDown, { passive: true });
+window.addEventListener('mousemove', onPointerMove);
+window.addEventListener('touchmove', (e) => {
+  if (isDragging) e.preventDefault();
+  onPointerMove(e);
+}, { passive: false });
+window.addEventListener('mouseup', onPointerUp);
+window.addEventListener('touchend', onPointerUp);
+window.addEventListener('touchcancel', onPointerUp);
 
 // Resize
 window.addEventListener('resize', () => {
