@@ -303,8 +303,9 @@ void main() {
   float fog = 1.0 - smoothstep(8.0, 18.0, t);
   color = mix(bgColor, color, fog);
 
-  // Opacity: blend blob with background
-  color = mix(bgColor, color, uOpacity);
+  // See-through opacity: edges (fresnel) more transparent, like glass/soap bubble
+  float seeThrough = (1.0 - uOpacity) * (0.35 + 0.65 * fresnel);
+  color = mix(bgColor, color, 1.0 - seeThrough);
 
   gl_FragColor = vec4(color, 1.0);
 }
