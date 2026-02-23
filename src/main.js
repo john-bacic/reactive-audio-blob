@@ -17,7 +17,24 @@ if (sidebar && sidebarToggle) {
 }
 
 const gitCommitEl = document.getElementById('gitCommit');
-if (gitCommitEl) gitCommitEl.textContent = typeof __GIT_COMMIT__ !== 'undefined' ? __GIT_COMMIT__ : 'dev';
+const buildCommit = typeof __GIT_COMMIT__ !== 'undefined' && __GIT_COMMIT__ ? __GIT_COMMIT__ : '';
+if (gitCommitEl) gitCommitEl.textContent = buildCommit || '—';
+
+async function setCommitFromGitHub() {
+  if (!gitCommitEl) return;
+  try {
+    const r = await fetch('https://api.github.com/repos/john-bacic/reactive-audio-blob/commits/main', {
+      headers: { Accept: 'application/vnd.github.v3+json' }
+    });
+    if (!r.ok) return;
+    const data = await r.json();
+    const sha = data.sha?.slice(0, 7);
+    if (sha) gitCommitEl.textContent = sha;
+  } catch {
+    if (!buildCommit) gitCommitEl.textContent = '—';
+  }
+}
+setCommitFromGitHub();
 
 // UI Elements
 const micBtn = document.getElementById('micBtn');

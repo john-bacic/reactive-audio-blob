@@ -3,10 +3,12 @@ import { execSync } from 'child_process';
 import { VitePWA } from 'vite-plugin-pwa';
 
 function gitCommit() {
+  const vercelSha = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (vercelSha) return vercelSha.slice(0, 7);
   try {
     return execSync('git rev-parse --short HEAD').toString().trim();
   } catch {
-    return 'dev';
+    return '';
   }
 }
 
