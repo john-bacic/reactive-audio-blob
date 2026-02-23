@@ -25,6 +25,7 @@ uniform float uShadow;
 uniform float uHighlight;
 uniform float uOpacity;
 uniform float uIridescence;
+uniform float uRainbow;
 
 // HSL to RGB (h,s,l in 0-1)
 vec3 hsl2rgb(vec3 c) {
@@ -211,6 +212,11 @@ vec3 shadeSurface(vec3 pos, vec3 nor, float depthT, vec3 ro, vec3 bgColor) {
   vec3 baseColor = hsl2rgb(vec3(uBaseHue, uBaseSat, uBaseLight));
   float audioIntensity = uBass;
   baseColor += vec3(uBass * 0.04, uBass * 0.02, uBass * 0.03) * audioIntensity;
+
+  // Rainbow variation across surface (position + time)
+  float rainbowHue = fract(dot(pos, vec3(0.21, 0.37, 0.13)) * 0.4 + uTime * 0.1);
+  vec3 rainbowColor = hsl2rgb(vec3(rainbowHue, 0.82, 0.68));
+  baseColor = mix(baseColor, rainbowColor, uRainbow);
 
   float diff1 = max(dot(nor, lightPos1), 0.0) * 0.5 + 0.5;
   float diff2 = max(dot(nor, lightPos2), 0.0) * 0.3 + 0.3;
