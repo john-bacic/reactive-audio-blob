@@ -6,6 +6,7 @@ uniform float uTime;
 uniform vec2 uResolution;
 uniform vec2 uPan;
 uniform float uBass;
+uniform float uBassPeak;
 uniform float uMid;
 uniform float uHigh;
 
@@ -143,16 +144,12 @@ vec3 getBlobPos(int i, float t) {
   return pos;
 }
 
-// Get animated size for blob i
+// Get animated size for blob i — all blobs use same uBassPeak so they pulse in sync
 float getBlobRadius(int i, float t) {
   float fi = float(i);
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
-  // Gentle organic pulsing
-  float pulse = sin(t * 2.0 + fi * 2.0) * 0.05;
-  base *= 1.0 + pulse;
-
-  float bassKick = sqrt(uBass);
+  float bassKick = sqrt(uBassPeak);
   float audioScale = 1.0 + bassKick * 4.2;
   base *= audioScale;
 

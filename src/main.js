@@ -251,6 +251,7 @@ const material = new THREE.ShaderMaterial({
   uPan: { value: new THREE.Vector2(0, 0) },
   uZoom: { value: 1 },
   uBass: { value: 0 },
+    uBassPeak: { value: 0 },
     uMid: { value: 0 },
     uHigh: { value: 0 },
     uBlobCount: { value: controls.blobCount },
@@ -402,15 +403,16 @@ function animate() {
   // Audio
   if (isAudioActive) {
     audioAnalyzer.update();
-    const { bass, mid, high } = audioAnalyzer.getFrequencyData();
+    const { bass, bassPeak, mid, high } = audioAnalyzer.getFrequencyData();
 
-    // Amplify with sensitivity and clamp to 0-1
     const s = controls.sensitivity;
     const aBass = Math.min(bass * s * 1.4, 1.0);
+    const aBassPeak = Math.min(bassPeak * s * 1.4, 1.0);
     const aMid = Math.min(mid * s, 1.0);
     const aHigh = Math.min(high * s, 1.0);
 
     material.uniforms.uBass.value = aBass;
+    material.uniforms.uBassPeak.value = aBassPeak;
     material.uniforms.uMid.value = aMid;
     material.uniforms.uHigh.value = aHigh;
 
