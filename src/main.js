@@ -129,7 +129,7 @@ scrubber.addEventListener('change', () => {
 });
 
 // Control defaults
-const ZOOM_MIN = 0.5, ZOOM_MAX = 3;
+const ZOOM_MIN = 0.1, ZOOM_MAX = 3;
 const controls = {
   zoom: 1,
   blobCount: 4,
