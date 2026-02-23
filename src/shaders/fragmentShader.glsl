@@ -24,6 +24,7 @@ uniform float uBaseLight;
 uniform float uShadow;
 uniform float uHighlight;
 uniform float uOpacity;
+uniform float uIridescence;
 
 // HSL to RGB (h,s,l in 0-1)
 vec3 hsl2rgb(vec3 c) {
@@ -200,6 +201,62 @@ float calcAO(vec3 pos, vec3 nor) {
   return clamp(1.0 - 1.5 * occ, 0.0, 1.0);
 }
 
+// Full shading for one surface (so we can shade both front and back hits)
+vec3 shadeSurface(vec3 pos, vec3 nor, float depthT, vec3 ro, vec3 bgColor) {
+  vec3 viewDir = normalize(ro - pos);
+  vec3 lightPos1 = normalize(vec3(2.0, 3.0, 4.0));
+  vec3 lightPos2 = normalize(vec3(-3.0, 2.0, -1.0));
+  vec3 lightPos3 = normalize(vec3(0.5, -1.0, 3.0));
+
+  vec3 baseColor = hsl2rgb(vec3(uBaseHue, uBaseSat, uBaseLight));
+  float audioIntensity = (uBass + uMid + uHigh) / 3.0;
+  baseColor += vec3(uBass * 0.02, uMid * 0.015, uHigh * 0.03) * audioIntensity;
+
+  float diff1 = max(dot(nor, lightPos1), 0.0) * 0.5 + 0.5;
+  float diff2 = max(dot(nor, lightPos2), 0.0) * 0.3 + 0.3;
+  float diff3 = max(dot(nor, lightPos3), 0.0);
+  float diffMix = diff1 * 0.55 + diff2 * 0.25 + diff3 * 0.15;
+  vec3 diffuse = baseColor * diffMix;
+
+  float shininess = 40.0 + uGlossiness * 160.0;
+  vec3 h1 = normalize(lightPos1 + viewDir);
+  vec3 h2 = normalize(lightPos2 + viewDir);
+  vec3 h3 = normalize(lightPos3 + viewDir);
+  float spec1 = pow(max(dot(nor, h1), 0.0), shininess) * 1.2;
+  float spec2 = pow(max(dot(nor, h2), 0.0), shininess * 0.7) * 0.5;
+  float spec3 = pow(max(dot(nor, h3), 0.0), shininess * 0.5) * 0.3;
+  vec3 specular = vec3(1.0) * (spec1 + spec2 + spec3) * (0.3 + uGlossiness * 0.7) * uHighlight;
+
+  float fresnel = pow(1.0 - max(dot(nor, viewDir), 0.0), 4.0);
+  vec3 fresnelColor = vec3(0.95, 0.95, 0.97) * fresnel * 0.4 * uHighlight;
+
+  // Iridescence: thin-film style color shift by view angle (soap bubble / oil slick)
+  vec3 iridescence = 0.5 + 0.5 * cos(6.28318 * (fresnel * 2.2 + vec3(0.0, 0.33, 0.67)));
+  iridescence *= fresnel * uIridescence * 0.6;
+
+  vec3 reflDir = reflect(-viewDir, nor);
+  float envReflect = smoothstep(-0.2, 1.0, reflDir.y) * 0.18;
+  vec3 envColor = mix(vec3(0.92, 0.92, 0.94), vec3(1.0), envReflect);
+
+  float sss = pow(max(dot(viewDir, -lightPos1), 0.0), 3.0) * 0.06;
+  float ao = calcAO(pos, nor);
+  float shadow = softShadow(pos + nor * 0.01, lightPos1, 0.02, 5.0, 16.0);
+  shadow = mix(shadow * 0.5 + 0.5, shadow, uShadow * 0.5 + 0.5);
+
+  float lighting = 0.45 + 0.55 * (ao * shadow);
+  vec3 color = diffuse * lighting + specular * shadow + fresnelColor + vec3(sss) + iridescence;
+  color = mix(color, envColor, fresnel * 0.18);
+  color += specular * audioIntensity * 0.2;
+
+  color = color / (color + vec3(0.12));
+  color = pow(color, vec3(0.95));
+  color = clamp(color, 0.0, 1.0);
+
+  float fog = 1.0 - smoothstep(8.0, 18.0, depthT);
+  color = mix(bgColor, color, fog);
+  return color;
+}
+
 void main() {
   vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
   uv /= max(uZoom, 0.01);
@@ -235,77 +292,39 @@ void main() {
     return;
   }
 
-  // We hit the surface
+  // First hit (front surface)
   vec3 pos = ro + rd * t;
   vec3 nor = calcNormal(pos);
   vec3 viewDir = normalize(ro - pos);
-
-  // Lighting
-  vec3 lightPos1 = normalize(vec3(2.0, 3.0, 4.0));
-  vec3 lightPos2 = normalize(vec3(-3.0, 2.0, -1.0));
-  vec3 lightPos3 = normalize(vec3(0.5, -1.0, 3.0));
-
-  // Base color from HSL
-  vec3 baseColor = hsl2rgb(vec3(uBaseHue, uBaseSat, uBaseLight));
-
-  // Subtle audio tint
-  float audioIntensity = (uBass + uMid + uHigh) / 3.0;
-  baseColor += vec3(uBass * 0.02, uMid * 0.015, uHigh * 0.03) * audioIntensity;
-
-  // Diffuse (wrapped for softness)
-  float diff1 = max(dot(nor, lightPos1), 0.0) * 0.5 + 0.5;
-  float diff2 = max(dot(nor, lightPos2), 0.0) * 0.3 + 0.3;
-  float diff3 = max(dot(nor, lightPos3), 0.0);
-  float diffMix = diff1 * 0.55 + diff2 * 0.25 + diff3 * 0.15;
-  vec3 diffuse = baseColor * diffMix;
-
-  // Specular (Blinn-Phong) scaled by uHighlight
-  float shininess = 40.0 + uGlossiness * 160.0;
-  vec3 h1 = normalize(lightPos1 + viewDir);
-  vec3 h2 = normalize(lightPos2 + viewDir);
-  vec3 h3 = normalize(lightPos3 + viewDir);
-  float spec1 = pow(max(dot(nor, h1), 0.0), shininess) * 1.2;
-  float spec2 = pow(max(dot(nor, h2), 0.0), shininess * 0.7) * 0.5;
-  float spec3 = pow(max(dot(nor, h3), 0.0), shininess * 0.5) * 0.3;
-  vec3 specular = vec3(1.0) * (spec1 + spec2 + spec3) * (0.3 + uGlossiness * 0.7) * uHighlight;
-
-  // Fresnel scaled by uHighlight
   float fresnel = pow(1.0 - max(dot(nor, viewDir), 0.0), 4.0);
-  vec3 fresnelColor = vec3(0.95, 0.95, 0.97) * fresnel * 0.4 * uHighlight;
 
-  // Fake environment reflection (lighter, less black)
-  vec3 reflDir = reflect(-viewDir, nor);
-  float envReflect = smoothstep(-0.2, 1.0, reflDir.y) * 0.18;
-  vec3 envColor = mix(vec3(0.92, 0.92, 0.94), vec3(1.0), envReflect);
+  vec3 color1 = shadeSurface(pos, nor, t, ro, bgColor);
 
-  // Subsurface scattering
-  float sss = pow(max(dot(viewDir, -lightPos1), 0.0), 3.0) * 0.06;
+  // Second raymarch: find surface behind this one (blob behind blob)
+  float t2 = t + 0.06;
+  bool hit2 = false;
+  for (int j = 0; j < 60; j++) {
+    vec3 p2 = ro + rd * t2;
+    float d2 = sceneSDF(p2);
+    if (d2 < 0.001) {
+      hit2 = true;
+      break;
+    }
+    t2 += d2;
+    if (t2 > 20.0) break;
+  }
 
-  // AO
-  float ao = calcAO(pos, nor);
-
-  // Soft shadow from main light (darker when uShadow higher)
-  float shadow = softShadow(pos + nor * 0.01, lightPos1, 0.02, 5.0, 16.0);
-  shadow = mix(shadow * 0.5 + 0.5, shadow, uShadow * 0.5 + 0.5);
-
-  // Combine with lifted floor so crevices between blobs aren't fully black
-  float lighting = 0.45 + 0.55 * (ao * shadow);
-  vec3 color = diffuse * lighting + specular * shadow + fresnelColor + vec3(sss);
-  color = mix(color, envColor, fresnel * 0.18);
-  color += specular * audioIntensity * 0.2;
-
-  // Tone mapping
-  color = color / (color + vec3(0.12));
-  color = pow(color, vec3(0.95));
-  color = clamp(color, 0.0, 1.0);
-
-  // Soft edge blend with background (depth fog)
-  float fog = 1.0 - smoothstep(8.0, 18.0, t);
-  color = mix(bgColor, color, fog);
-
-  // See-through opacity: edges (fresnel) more transparent, like glass/soap bubble
   float seeThrough = (1.0 - uOpacity) * (0.35 + 0.65 * fresnel);
-  color = mix(bgColor, color, 1.0 - seeThrough);
+  vec3 color;
+  if (hit2) {
+    vec3 pos2 = ro + rd * t2;
+    vec3 nor2 = calcNormal(pos2);
+    vec3 color2 = shadeSurface(pos2, nor2, t2, ro, bgColor);
+    // Show back blob through transparent front blob
+    color = mix(color2, color1, 1.0 - seeThrough);
+  } else {
+    color = mix(bgColor, color1, 1.0 - seeThrough);
+  }
 
   gl_FragColor = vec4(color, 1.0);
 }

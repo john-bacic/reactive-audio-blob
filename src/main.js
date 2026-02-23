@@ -146,6 +146,7 @@ const controls = {
   shadow: 0.5,
   highlight: 0.7,
   opacity: 1,
+  iridescence: 0,
 };
 
 // Bind sliders to controls
@@ -176,6 +177,7 @@ bindSlider('baseLight', 'baseLight');
 bindSlider('shadow', 'shadow');
 bindSlider('highlight', 'highlight');
 bindSlider('opacity', 'opacity');
+bindSlider('iridescence', 'iridescence');
 
 function syncZoomSliderToControl() {
   const z = controls.zoom;
@@ -232,6 +234,7 @@ const material = new THREE.ShaderMaterial({
     uShadow: { value: controls.shadow },
     uHighlight: { value: controls.highlight },
     uOpacity: { value: controls.opacity },
+    uIridescence: { value: controls.iridescence },
   },
   vertexShader,
   fragmentShader,
@@ -380,6 +383,7 @@ function animate() {
   material.uniforms.uShadow.value = controls.shadow;
   material.uniforms.uHighlight.value = controls.highlight;
   material.uniforms.uOpacity.value = controls.opacity;
+  material.uniforms.uIridescence.value = controls.iridescence;
 
   renderer.render(scene, camera);
 }
