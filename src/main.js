@@ -406,7 +406,7 @@ function animate() {
 
     // Amplify with sensitivity and clamp to 0-1
     const s = controls.sensitivity;
-    const aBass = Math.min(bass * s, 1.0);
+    const aBass = Math.min(bass * s * 1.4, 1.0);
     const aMid = Math.min(mid * s, 1.0);
     const aHigh = Math.min(high * s, 1.0);
 

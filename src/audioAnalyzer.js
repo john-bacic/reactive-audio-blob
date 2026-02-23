@@ -14,8 +14,8 @@ export class AudioAnalyzer {
     this.mid = 0;
     this.high = 0;
 
-    // Smoothing (lower = more responsive)
     this.smoothingFactor = 0.4;
+    this.bassSmoothingFactor = 0.55;
     this.prevBass = 0;
     this.prevMid = 0;
     this.prevHigh = 0;
@@ -53,7 +53,7 @@ export class AudioAnalyzer {
   _createAnalyser() {
     this.analyser = this.audioContext.createAnalyser();
     this.analyser.fftSize = this.fftSize;
-    this.analyser.smoothingTimeConstant = 0.6;
+    this.analyser.smoothingTimeConstant = 0.35;
     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
   }
 
@@ -156,13 +156,16 @@ export class AudioAnalyzer {
 
     const binHz = this.audioContext.sampleRate / this.fftSize;
 
-    // Bass: 20-250 Hz
-    const bassEnd = Math.floor(250 / binHz);
+    // Bass: 40-280 Hz (skip bin 0 = DC), weight toward kick range
+    const bassStart = Math.max(1, Math.floor(40 / binHz));
+    const bassEnd = Math.floor(280 / binHz);
     let bassSum = 0;
-    for (let i = 0; i < bassEnd; i++) {
-      bassSum += this.dataArray[i];
+    for (let i = bassStart; i < bassEnd; i++) {
+      const weight = i < bassEnd * 0.5 ? 1.2 : 1.0;
+      bassSum += this.dataArray[i] * weight;
     }
-    const bassAvg = bassSum / bassEnd / 255;
+    const bassBins = Math.max(1, bassEnd - bassStart);
+    const bassAvg = Math.min(1, (bassSum / bassBins / 255) * 1.6);
 
     // Mids: 250-2000 Hz
     const midStart = bassEnd;
@@ -182,8 +185,7 @@ export class AudioAnalyzer {
     }
     const highAvg = highSum / (highEnd - highStart) / 255;
 
-    // Exponential smoothing
-    this.bass = this.smoothingFactor * this.prevBass + (1 - this.smoothingFactor) * bassAvg;
+    this.bass = this.bassSmoothingFactor * this.prevBass + (1 - this.bassSmoothingFactor) * bassAvg;
     this.mid = this.smoothingFactor * this.prevMid + (1 - this.smoothingFactor) * midAvg;
     this.high = this.smoothingFactor * this.prevHigh + (1 - this.smoothingFactor) * highAvg;
 

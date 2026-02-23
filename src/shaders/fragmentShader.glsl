@@ -152,9 +152,8 @@ float getBlobRadius(int i, float t) {
   float pulse = sin(t * 2.0 + fi * 2.0) * 0.05;
   base *= 1.0 + pulse;
 
-  // Bass-only: blobs react to low frequencies for a clear punch
-  float bassKick = uBass * uBass;
-  float audioScale = 1.0 + bassKick * 2.4;
+  float bassKick = sqrt(uBass);
+  float audioScale = 1.0 + bassKick * 4.2;
   base *= audioScale;
 
   return base;
