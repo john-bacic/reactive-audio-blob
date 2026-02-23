@@ -26,21 +26,68 @@ canvas {
   pointer-events: none;
 }
 
+/* Sidebar toggle */
+.sidebar-toggle {
+  position: fixed;
+  top: 12px;
+  left: 220px;
+  z-index: 101;
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  background: rgba(15, 15, 15, 0.92);
+  backdrop-filter: blur(12px);
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: left 0.25s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.sidebar-toggle:hover { background: rgba(25, 25, 25, 0.95); }
+.sidebar-toggle:active { background: rgba(35, 35, 35, 0.98); }
+
+.sidebar-toggle-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: 0 auto;
+  border-left: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.2s ease;
+}
+.panel.is-hidden + .sidebar-toggle .sidebar-toggle-icon {
+  transform: rotate(135deg);
+}
+.panel.is-hidden + .sidebar-toggle { left: 0; }
+
 /* Left panel */
 .panel {
   position: fixed;
   top: 0;
   left: 0;
   width: 220px;
+  max-width: 85vw;
   height: 100vh;
+  height: 100dvh;
   background: rgba(15, 15, 15, 0.92);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 100;
   pointer-events: auto;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 16px 14px;
+  padding-bottom: env(safe-area-inset-bottom, 16px);
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 0.25s ease;
 }
+.panel.is-hidden { transform: translateX(-100%); pointer-events: none; }
 
 .panel::-webkit-scrollbar {
   width: 4px;
@@ -237,4 +284,18 @@ canvas {
   min-width: 32px;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* Mobile / PWA: safe area and touch */
+@media (max-width: 600px) {
+  .panel { width: 260px; }
+  .sidebar-toggle { left: 260px; }
+  .panel.is-hidden + .sidebar-toggle { left: 0; }
+}
+@media (pointer: coarse) {
+  .control-btn { min-height: 44px; padding: 10px 8px; }
+  .slider-row input[type="range"]::-webkit-slider-thumb { width: 20px; height: 20px; }
+  .slider-row input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; }
+  .scrubber::-webkit-slider-thumb { width: 20px; height: 20px; }
+  .scrubber::-moz-range-thumb { width: 20px; height: 20px; }
 }

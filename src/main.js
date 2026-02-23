@@ -7,6 +7,15 @@ import fragmentShader from './shaders/fragmentShader.glsl?raw';
 const audioAnalyzer = new AudioAnalyzer();
 let isAudioActive = false;
 
+// Sidebar toggle
+const sidebar = document.getElementById('sidebar');
+const sidebarToggle = document.getElementById('sidebarToggle');
+const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
+if (sidebar && sidebarToggle) {
+  if (isMobile()) sidebar.classList.add('is-hidden');
+  sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('is-hidden'));
+}
+
 // UI Elements
 const micBtn = document.getElementById('micBtn');
 const fileBtn = document.getElementById('fileBtn');
