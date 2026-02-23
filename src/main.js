@@ -258,6 +258,8 @@ const material = new THREE.ShaderMaterial({
     uBassPeak: { value: 0 },
     uMid: { value: 0 },
     uHigh: { value: 0 },
+    uBandEnvelopes0: { value: new THREE.Vector4(0, 0, 0, 0) },
+    uBandEnvelopes1: { value: new THREE.Vector4(0, 0, 0, 0) },
     uBlobCount: { value: controls.blobCount },
     uBlobSize: { value: controls.blobSize },
     uMergeStrength: { value: controls.mergeStrength },
@@ -406,10 +408,11 @@ function animate() {
 
   // Audio
   if (isAudioActive) {
+    audioAnalyzer.bandCount = Math.round(controls.blobCount);
     audioAnalyzer.pulseAttackCoeff = 0.2 + 0.75 * controls.pulseAttack;
     audioAnalyzer.pulseReleaseCoeff = 0.03 + 0.45 * (1 - controls.pulseRelease);
     audioAnalyzer.update();
-    const { bass, bassPeak, mid, high } = audioAnalyzer.getFrequencyData();
+    const { bass, bassPeak, envelopes, mid, high } = audioAnalyzer.getFrequencyData();
 
     const s = controls.sensitivity;
     const aBass = Math.min(bass * s, 1.0);
@@ -421,6 +424,17 @@ function animate() {
     material.uniforms.uBassPeak.value = aBassPeak;
     material.uniforms.uMid.value = aMid;
     material.uniforms.uHigh.value = aHigh;
+
+    // Pack per-band envelopes into two vec4 uniforms (scaled by sensitivity)
+    const e = envelopes;
+    material.uniforms.uBandEnvelopes0.value.set(
+      Math.min(e[0] * s, 1), Math.min(e[1] * s, 1),
+      Math.min(e[2] * s, 1), Math.min(e[3] * s, 1)
+    );
+    material.uniforms.uBandEnvelopes1.value.set(
+      Math.min(e[4] * s, 1), Math.min(e[5] * s, 1),
+      Math.min(e[6] * s, 1), Math.min(e[7] * s, 1)
+    );
 
     bassBar.style.height = `${aBassPeak * 100}%`;
     bassBar.style.background = `linear-gradient(to top, rgba(255, 0, 102, ${aBassPeak}), rgba(255, 102, 153, ${aBassPeak * 0.5}))`;

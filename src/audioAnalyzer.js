@@ -1,3 +1,19 @@
+const MAX_BANDS = 8;
+
+// Frequency range edges (Hz) - logarithmically spaced from 40Hz to 12kHz
+const FREQ_MIN = 40;
+const FREQ_MAX = 12000;
+
+function buildBandEdges(count) {
+  const edges = [];
+  const logMin = Math.log(FREQ_MIN);
+  const logMax = Math.log(FREQ_MAX);
+  for (let i = 0; i <= count; i++) {
+    edges.push(Math.exp(logMin + (logMax - logMin) * (i / count)));
+  }
+  return edges;
+}
+
 export class AudioAnalyzer {
   constructor() {
     this.audioContext = null;
@@ -9,16 +25,13 @@ export class AudioAnalyzer {
     this.micStream = null;
     this.micSource = null;
 
-    // Dedicated bass filter chain
-    this.bassFilter = null;
-    this.bassAnalyser = null;
-    this.bassTimeDomain = null;
+    this.bandCount = 4;
+    this.bands = new Float32Array(MAX_BANDS);
+    this.envelopes = new Float32Array(MAX_BANDS);
 
     this.bass = 0;
     this.mid = 0;
     this.high = 0;
-    this.rawBassRMS = 0;
-    this.envelope = 0;
 
     this.smoothingFactor = 0.4;
     this.pulseAttackCoeff = 0.85;
@@ -46,12 +59,6 @@ export class AudioAnalyzer {
     if (this.analyser) {
       try { this.analyser.disconnect(); } catch (e) {}
     }
-    if (this.bassFilter) {
-      try { this.bassFilter.disconnect(); } catch (e) {}
-    }
-    if (this.bassAnalyser) {
-      try { this.bassAnalyser.disconnect(); } catch (e) {}
-    }
     if (this.micStream) {
       this.micStream.getTracks().forEach(track => track.stop());
       this.micStream = null;
@@ -63,31 +70,14 @@ export class AudioAnalyzer {
 
   _createAnalysers() {
     const ctx = this.audioContext;
-
-    // Main analyser for frequency bars (mid/high)
     this.analyser = ctx.createAnalyser();
     this.analyser.fftSize = this.fftSize;
-    this.analyser.smoothingTimeConstant = 0.3;
+    this.analyser.smoothingTimeConstant = 0.15;
     this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
-
-    // Bass isolation: lowpass filter → dedicated analyser with NO smoothing
-    this.bassFilter = ctx.createBiquadFilter();
-    this.bassFilter.type = 'lowpass';
-    this.bassFilter.frequency.value = 160;
-    this.bassFilter.Q.value = 0.7;
-
-    this.bassAnalyser = ctx.createAnalyser();
-    this.bassAnalyser.fftSize = 1024;
-    this.bassAnalyser.smoothingTimeConstant = 0;
-    this.bassTimeDomain = new Float32Array(this.bassAnalyser.fftSize);
   }
 
   _connectSource(sourceNode) {
-    // source → main analyser (for mid/high frequency bars)
     sourceNode.connect(this.analyser);
-    // source → bass lowpass filter → bass analyser (for beat pulse)
-    sourceNode.connect(this.bassFilter);
-    this.bassFilter.connect(this.bassAnalyser);
   }
 
   async initMicrophone() {
@@ -169,43 +159,59 @@ export class AudioAnalyzer {
   update() {
     if (!this.analyser || !this.dataArray) return;
 
-    // --- Bass: time-domain RMS from filtered signal (no FFT smoothing) ---
-    if (this.bassAnalyser && this.bassTimeDomain) {
-      this.bassAnalyser.getFloatTimeDomainData(this.bassTimeDomain);
-      let sumSq = 0;
-      for (let i = 0; i < this.bassTimeDomain.length; i++) {
-        const v = this.bassTimeDomain[i];
-        sumSq += v * v;
-      }
-      this.rawBassRMS = Math.sqrt(sumSq / this.bassTimeDomain.length);
-    }
-
-    // Scale RMS to 0-1 range (typical RMS for music bass is 0-0.3)
-    this.bass = Math.min(1, this.rawBassRMS * 4.5);
-
-    // --- Envelope follower on raw bass ---
-    if (this.bass >= this.envelope) {
-      this.envelope += (this.bass - this.envelope) * this.pulseAttackCoeff;
-    } else {
-      this.envelope += (this.bass - this.envelope) * this.pulseReleaseCoeff;
-    }
-    this.envelope = Math.max(0, Math.min(1, this.envelope));
-
-    // --- Mids and Highs from FFT (for frequency bars only) ---
     this.analyser.getByteFrequencyData(this.dataArray);
     const binHz = this.audioContext.sampleRate / this.fftSize;
+    const count = Math.max(1, Math.min(MAX_BANDS, this.bandCount));
+    const edges = buildBandEdges(count);
+
+    for (let b = 0; b < MAX_BANDS; b++) {
+      if (b >= count) {
+        this.bands[b] = 0;
+        this.envelopes[b] *= 0.9;
+        continue;
+      }
+
+      const loHz = edges[b];
+      const hiHz = edges[b + 1];
+      const loBin = Math.max(1, Math.floor(loHz / binHz));
+      const hiBin = Math.min(this.dataArray.length - 1, Math.floor(hiHz / binHz));
+
+      let sum = 0;
+      let n = 0;
+      for (let i = loBin; i <= hiBin; i++) {
+        sum += this.dataArray[i];
+        n++;
+      }
+      const avg = n > 0 ? (sum / n / 255) : 0;
+
+      // Lower bands get more gain (bass is quieter in FFT)
+      const boostFactor = 1.0 + Math.max(0, 1.5 - b * 0.3);
+      this.bands[b] = Math.min(1, avg * boostFactor);
+
+      // Envelope follower per band
+      const target = this.bands[b];
+      if (target >= this.envelopes[b]) {
+        this.envelopes[b] += (target - this.envelopes[b]) * this.pulseAttackCoeff;
+      } else {
+        this.envelopes[b] += (target - this.envelopes[b]) * this.pulseReleaseCoeff;
+      }
+      this.envelopes[b] = Math.max(0, Math.min(1, this.envelopes[b]));
+    }
+
+    // Legacy bass/mid/high for frequency bars
+    this.bass = this.envelopes[0];
 
     const midStart = Math.floor(250 / binHz);
     const midEnd = Math.floor(2000 / binHz);
     let midSum = 0;
     for (let i = midStart; i < midEnd; i++) midSum += this.dataArray[i];
-    const midAvg = midSum / (midEnd - midStart) / 255;
+    const midAvg = midSum / Math.max(1, midEnd - midStart) / 255;
 
     const highStart = midEnd;
-    const highEnd = Math.floor(8000 / binHz);
+    const highEnd = Math.min(this.dataArray.length - 1, Math.floor(8000 / binHz));
     let highSum = 0;
     for (let i = highStart; i < highEnd; i++) highSum += this.dataArray[i];
-    const highAvg = highSum / (highEnd - highStart) / 255;
+    const highAvg = highSum / Math.max(1, highEnd - highStart) / 255;
 
     this.mid = this.smoothingFactor * this.prevMid + (1 - this.smoothingFactor) * midAvg;
     this.high = this.smoothingFactor * this.prevHigh + (1 - this.smoothingFactor) * highAvg;
@@ -216,7 +222,9 @@ export class AudioAnalyzer {
   getFrequencyData() {
     return {
       bass: this.bass,
-      bassPeak: this.envelope,
+      bassPeak: this.envelopes[0],
+      bands: this.bands,
+      envelopes: this.envelopes,
       mid: this.mid,
       high: this.high
     };
@@ -225,12 +233,12 @@ export class AudioAnalyzer {
   stop() {
     this._disconnectAll();
     this.bass = 0;
-    this.envelope = 0;
-    this.rawBassRMS = 0;
     this.mid = 0;
     this.high = 0;
     this.prevMid = 0;
     this.prevHigh = 0;
+    this.bands.fill(0);
+    this.envelopes.fill(0);
   }
 
   dispose() {

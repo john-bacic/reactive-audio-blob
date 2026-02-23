@@ -9,6 +9,8 @@ uniform float uBass;
 uniform float uBassPeak;
 uniform float uMid;
 uniform float uHigh;
+uniform vec4 uBandEnvelopes0; // bands 0-3
+uniform vec4 uBandEnvelopes1; // bands 4-7
 
 // Controls
 uniform float uBlobCount;
@@ -144,14 +146,28 @@ vec3 getBlobPos(int i, float t) {
   return pos;
 }
 
-// Get animated size for blob i — driven by uBassPeak (peak + transient pulse)
+// Read per-blob band envelope from packed vec4 uniforms
+float getBandEnvelope(int i) {
+  if (i < 4) {
+    if (i == 0) return uBandEnvelopes0.x;
+    if (i == 1) return uBandEnvelopes0.y;
+    if (i == 2) return uBandEnvelopes0.z;
+    return uBandEnvelopes0.w;
+  }
+  if (i == 4) return uBandEnvelopes1.x;
+  if (i == 5) return uBandEnvelopes1.y;
+  if (i == 6) return uBandEnvelopes1.z;
+  return uBandEnvelopes1.w;
+}
+
+// Each blob pulses to its own frequency band
 float getBlobRadius(int i, float t) {
   float fi = float(i);
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
-  float b = clamp(uBassPeak, 0.0, 1.0);
-  float bassKick = pow(b, 0.45);
-  float audioScale = 1.0 + bassKick * 7.0;
+  float b = clamp(getBandEnvelope(i), 0.0, 1.0);
+  float kick = pow(b, 0.55);
+  float audioScale = 1.0 + kick * 5.8;
   base *= audioScale;
 
   return base;
