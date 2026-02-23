@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Reactive Blob</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="container"></div>
+
+  <div class="panel">
+    <h2 class="panel-title">3D BLOB</h2>
+
+    <!-- Audio Section -->
+    <div class="section">
+      <div class="section-header">AUDIO REACTIVE</div>
+      <div class="control-group">
+        <button id="micBtn" class="control-btn">Microphone</button>
+        <button id="fileBtn" class="control-btn">Upload Audio</button>
+        <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+      </div>
+      <div id="statusText" class="status-text">Click a button to start</div>
+      <div id="scrubberContainer" class="scrubber-container" style="display: none;">
+        <input type="range" id="scrubber" min="0" max="100" step="0.1" value="0" class="scrubber">
+        <div class="scrubber-times">
+          <span id="currentTime">0:00</span>
+          <span id="totalTime">0:00</span>
+        </div>
+      </div>
+      <div class="frequency-bars">
+        <div class="freq-bar">
+          <div class="bar-fill" id="bassBar"></div>
+          <span class="bar-label">Bass</span>
+        </div>
+        <div class="freq-bar">
+          <div class="bar-fill" id="midBar"></div>
+          <span class="bar-label">Mid</span>
+        </div>
+        <div class="freq-bar">
+          <div class="bar-fill" id="highBar"></div>
+          <span class="bar-label">High</span>
+        </div>
+      </div>
+
+      <div class="slider-row" style="margin-top: 10px;">
+        <label>SENSITIVITY</label>
+        <input type="range" id="sensitivity" min="0.5" max="5.0" step="0.1" value="2.0">
+        <span class="slider-value" id="sensitivityValue">2.00</span>
+      </div>
+    </div>
+
+    <!-- Blob Controls -->
+    <div class="section">
+      <div class="section-header">BLOBS</div>
+
+      <div class="slider-row">
+        <label>COUNT</label>
+        <input type="range" id="blobCount" min="1" max="8" step="1" value="4">
+        <span class="slider-value" id="blobCountValue">4.00</span>
+      </div>
+
+      <div class="slider-row">
+        <label>SIZE</label>
+        <input type="range" id="blobSize" min="0.2" max="1.8" step="0.01" value="0.8">
+        <span class="slider-value" id="blobSizeValue">0.80</span>
+      </div>
+
+      <div class="slider-row">
+        <label>MERGE</label>
+        <input type="range" id="mergeStrength" min="0.05" max="2.0" step="0.01" value="0.7">
+        <span class="slider-value" id="mergeStrengthValue">0.70</span>
+      </div>
+
+      <div class="slider-row">
+        <label>SPREAD</label>
+        <input type="range" id="spread" min="0.5" max="4.0" step="0.01" value="2.0">
+        <span class="slider-value" id="spreadValue">2.00</span>
+      </div>
+    </div>
+
+    <!-- Animation Controls -->
+    <div class="section">
+      <div class="section-header">ANIMATION</div>
+
+      <div class="slider-row">
+        <label>SPEED</label>
+        <input type="range" id="animSpeed" min="0.0" max="3.0" step="0.01" value="1.0">
+        <span class="slider-value" id="animSpeedValue">1.00</span>
+      </div>
+
+      <div class="slider-row">
+        <label>DEFORMATION</label>
+        <input type="range" id="deformation" min="0.0" max="1.0" step="0.01" value="0.3">
+        <span class="slider-value" id="deformationValue">0.30</span>
+      </div>
+    </div>
+
+    <!-- Material Controls -->
+    <div class="section">
+      <div class="section-header">MATERIAL</div>
+
+      <div class="slider-row">
+        <label>GLOSSINESS</label>
+        <input type="range" id="glossiness" min="0.0" max="1.0" step="0.01" value="0.7">
+        <span class="slider-value" id="glossinessValue">0.70</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
