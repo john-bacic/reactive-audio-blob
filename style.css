@@ -4,19 +4,29 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+  min-height: 100dvh;
+  min-height: 100vh;
+}
+
 body {
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   background: #c8c8c8;
   color: #fff;
   overflow: hidden;
+  position: relative;
 }
 
 #container {
-  width: 100vw;
-  height: 100vh;
   position: fixed;
   top: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
   z-index: 1;
   pointer-events: none;
 }
@@ -26,10 +36,10 @@ canvas {
   pointer-events: none;
 }
 
-/* Sidebar toggle */
+/* Sidebar toggle – bottom left */
 .sidebar-toggle {
   position: fixed;
-  top: 12px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   left: 220px;
   z-index: 101;
   width: 40px;
@@ -65,6 +75,24 @@ canvas {
   transform: rotate(135deg);
 }
 .panel.is-hidden + .sidebar-toggle { left: 0; }
+
+/* Git commit footer */
+.git-commit {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 99;
+  padding: 4px 10px;
+  padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.35);
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  text-align: center;
+}
 
 /* Left panel */
 .panel {
@@ -291,6 +319,9 @@ canvas {
   .panel { width: 260px; }
   .sidebar-toggle { left: 260px; }
   .panel.is-hidden + .sidebar-toggle { left: 0; }
+}
+.git-commit {
+  font-size: 9px;
 }
 @media (pointer: coarse) {
   .control-btn { min-height: 44px; padding: 10px 8px; }

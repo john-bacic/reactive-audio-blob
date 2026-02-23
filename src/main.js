@@ -16,6 +16,9 @@ if (sidebar && sidebarToggle) {
   sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('is-hidden'));
 }
 
+const gitCommitEl = document.getElementById('gitCommit');
+if (gitCommitEl) gitCommitEl.textContent = typeof __GIT_COMMIT__ !== 'undefined' ? __GIT_COMMIT__ : 'dev';
+
 // UI Elements
 const micBtn = document.getElementById('micBtn');
 const fileBtn = document.getElementById('fileBtn');

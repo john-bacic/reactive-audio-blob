@@ -1,8 +1,18 @@
 import { defineConfig } from 'vite';
+import { execSync } from 'child_process';
 import { VitePWA } from 'vite-plugin-pwa';
+
+function gitCommit() {
+  try {
+    return execSync('git rev-parse --short HEAD').toString().trim();
+  } catch {
+    return 'dev';
+  }
+}
 
 export default defineConfig({
   server: { open: true, port: 3000 },
+  define: { __GIT_COMMIT__: JSON.stringify(gitCommit()) },
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',

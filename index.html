@@ -14,10 +14,6 @@
 <body>
   <div id="container"></div>
 
-  <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
-    <span class="sidebar-toggle-icon" aria-hidden="true"></span>
-  </button>
-
   <div class="panel" id="sidebar">
     <h2 class="panel-title">3D BLOB</h2>
 
@@ -116,6 +112,12 @@
       </div>
     </div>
   </div>
+
+  <button type="button" id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+    <span class="sidebar-toggle-icon" aria-hidden="true"></span>
+  </button>
+
+  <footer class="git-commit" id="gitCommit" aria-label="Build version"></footer>
 
   <script type="module" src="/src/main.js"></script>
 </body>
