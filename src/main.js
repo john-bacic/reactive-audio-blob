@@ -1,7 +1,16 @@
 import * as THREE from 'three';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 import { AudioAnalyzer } from './audioAnalyzer.js';
 import vertexShader from './shaders/vertexShader.glsl?raw';
 import fragmentShader from './shaders/fragmentShader.glsl?raw';
+
+const HDRI_URLS = {
+  studio_small_03: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr',
+  kloppenheim_02: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/kloppenheim_02_1k.hdr',
+  venice_sunset: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/venice_sunset_1k.hdr',
+  industrial_sunset: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/industrial_sunset_02_1k.hdr',
+  brown_photostudio: 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/brown_photostudio_02_1k.hdr',
+};
 
 // Audio analyzer
 const audioAnalyzer = new AudioAnalyzer();
@@ -148,6 +157,8 @@ const controls = {
   opacity: 1,
   iridescence: 0,
   rainbow: 0.65,
+  colorScheme: 0,
+  hdri: 'none',
 };
 
 // Bind sliders to controls
@@ -181,6 +192,22 @@ bindSlider('opacity', 'opacity');
 bindSlider('iridescence', 'iridescence');
 bindSlider('rainbow', 'rainbow');
 
+const colorSchemeSelect = document.getElementById('colorScheme');
+const hdriSelect = document.getElementById('hdriSelect');
+if (colorSchemeSelect) {
+  colorSchemeSelect.value = String(controls.colorScheme);
+  colorSchemeSelect.addEventListener('change', () => {
+    controls.colorScheme = parseInt(colorSchemeSelect.value, 10);
+  });
+}
+if (hdriSelect) {
+  hdriSelect.value = controls.hdri;
+  hdriSelect.addEventListener('change', () => {
+    controls.hdri = hdriSelect.value;
+    setHdriBackground(controls.hdri);
+  });
+}
+
 function syncZoomSliderToControl() {
   const z = controls.zoom;
   const slider = document.getElementById('zoom');
@@ -211,6 +238,9 @@ document.getElementById('container').appendChild(renderer.domElement);
 const quadGeometry = new THREE.PlaneGeometry(2, 2);
 
 const pan = { x: 0, y: 0 };
+const dummyEnvMap = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+dummyEnvMap.needsUpdate = true;
+
 const material = new THREE.ShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
@@ -238,6 +268,9 @@ const material = new THREE.ShaderMaterial({
     uOpacity: { value: controls.opacity },
     uIridescence: { value: controls.iridescence },
     uRainbow: { value: controls.rainbow },
+    uColorScheme: { value: controls.colorScheme },
+    uEnvMap: { value: dummyEnvMap },
+    uUseEnvMap: { value: 0 },
   },
   vertexShader,
   fragmentShader,
@@ -245,6 +278,30 @@ const material = new THREE.ShaderMaterial({
 
 const quad = new THREE.Mesh(quadGeometry, material);
 scene.add(quad);
+
+const rgbeLoader = new RGBELoader();
+
+function setHdriBackground(key) {
+  const m = material.uniforms;
+  if (key === 'none') {
+    m.uUseEnvMap.value = 0;
+    m.uEnvMap.value = dummyEnvMap;
+    return;
+  }
+  const url = HDRI_URLS[key];
+  if (!url) return;
+  m.uUseEnvMap.value = 0;
+  rgbeLoader.load(url, (texture) => {
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter = THREE.LinearFilter;
+    m.uEnvMap.value = texture;
+    m.uUseEnvMap.value = 1;
+  }, undefined, () => {
+    m.uUseEnvMap.value = 0;
+    m.uEnvMap.value = dummyEnvMap;
+  });
+}
+setHdriBackground(controls.hdri);
 
 // Touch/mouse drag to pan blobs; two-finger pinch to zoom; tap to close sidebar
 const container = document.getElementById('container');
@@ -388,6 +445,7 @@ function animate() {
   material.uniforms.uOpacity.value = controls.opacity;
   material.uniforms.uIridescence.value = controls.iridescence;
   material.uniforms.uRainbow.value = controls.rainbow;
+  material.uniforms.uColorScheme.value = controls.colorScheme;
 
   renderer.render(scene, camera);
 }

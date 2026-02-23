@@ -301,12 +301,49 @@ canvas {
   margin-bottom: 8px;
 }
 
-.slider-row label {
+.slider-row label,
+.select-row label {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.5px;
   min-width: 70px;
   flex-shrink: 0;
+}
+
+.select-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.panel-select {
+  flex: 1;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='rgba(255,255,255,0.5)'%3E%3Cpath d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
+}
+
+.panel-select:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.panel-select:focus {
+  outline: none;
+  border-color: rgba(80, 200, 120, 0.5);
 }
 
 .slider-row input[type="range"] {

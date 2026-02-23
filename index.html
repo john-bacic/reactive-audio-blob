@@ -63,6 +63,17 @@
         <input type="range" id="zoom" min="0.10" max="3" step="0.01" value="1">
         <span class="slider-value" id="zoomValue">1.00</span>
       </div>
+      <div class="select-row">
+        <label for="hdriSelect">BACKGROUND</label>
+        <select id="hdriSelect" class="panel-select" aria-label="HDRI background">
+          <option value="none">Solid</option>
+          <option value="studio_small_03">Studio</option>
+          <option value="kloppenheim_02">Outdoor</option>
+          <option value="venice_sunset">Venice Sunset</option>
+          <option value="industrial_sunset">Industrial Sunset</option>
+          <option value="brown_photostudio">Studio Warm</option>
+        </select>
+      </div>
     </div>
 
     <!-- Blob Controls -->
@@ -130,8 +141,21 @@
         <input type="range" id="iridescence" min="0" max="1" step="0.01" value="0">
         <span class="slider-value" id="iridescenceValue">0.00</span>
       </div>
+      <div class="select-row">
+        <label for="colorScheme">COLOR SCHEME</label>
+        <select id="colorScheme" class="panel-select" aria-label="Color scheme">
+          <option value="0">Rainbow</option>
+          <option value="1">Sunset</option>
+          <option value="2">Ocean</option>
+          <option value="3">Forest</option>
+          <option value="4">Neon</option>
+          <option value="5">Candy</option>
+          <option value="6">Monochrome</option>
+          <option value="7">Gold</option>
+        </select>
+      </div>
       <div class="slider-row">
-        <label>RAINBOW</label>
+        <label>SCHEME MIX</label>
         <input type="range" id="rainbow" min="0" max="1" step="0.01" value="0.65">
         <span class="slider-value" id="rainbowValue">0.65</span>
       </div>

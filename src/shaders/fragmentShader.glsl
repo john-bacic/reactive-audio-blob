@@ -26,12 +26,47 @@ uniform float uHighlight;
 uniform float uOpacity;
 uniform float uIridescence;
 uniform float uRainbow;
+uniform float uColorScheme;
+uniform sampler2D uEnvMap;
+uniform float uUseEnvMap;
 
 // HSL to RGB (h,s,l in 0-1)
 vec3 hsl2rgb(vec3 c) {
   vec3 K = vec3(1.0, 2.0/3.0, 1.0/3.0);
   vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - 3.0);
   return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
+// Accent color by scheme index (0-7): position + time drive variation
+vec3 accentColorByScheme(float scheme, vec3 pos, float t) {
+  float hue = fract(dot(pos, vec3(0.21, 0.37, 0.13)) * 0.4 + t * 0.1);
+  float sat = 0.82;
+  float light = 0.68;
+
+  if (scheme < 0.5) {
+    return hsl2rgb(vec3(hue, sat, light)); // 0 Rainbow
+  }
+  if (scheme < 1.5) {
+    return hsl2rgb(vec3(0.05 + hue * 0.12, 0.9, 0.55)); // 1 Sunset (orange-red)
+  }
+  if (scheme < 2.5) {
+    return hsl2rgb(vec3(0.55 + hue * 0.1, 0.7, 0.5)); // 2 Ocean (teal-blue)
+  }
+  if (scheme < 3.5) {
+    return hsl2rgb(vec3(0.32 + hue * 0.08, 0.6, 0.45)); // 3 Forest (green)
+  }
+  if (scheme < 4.5) {
+    float nh = fract(hue * 3.0);
+    return hsl2rgb(vec3(nh * 0.33, 1.0, 0.6)); // 4 Neon (vivid cycling)
+  }
+  if (scheme < 5.5) {
+    return hsl2rgb(vec3(0.92 + hue * 0.08, 0.7, 0.75)); // 5 Candy (pink)
+  }
+  if (scheme < 6.5) {
+    float g = 0.4 + 0.35 * sin(hue * 6.28318);
+    return vec3(g, g, g); // 6 Monochrome
+  }
+  return hsl2rgb(vec3(0.12 + hue * 0.05, 0.5, 0.65)); // 7 Gold
 }
 
 // Smooth minimum for metaball blending
@@ -213,10 +248,8 @@ vec3 shadeSurface(vec3 pos, vec3 nor, float depthT, vec3 ro, vec3 bgColor) {
   float audioIntensity = uBass;
   baseColor += vec3(uBass * 0.04, uBass * 0.02, uBass * 0.03) * audioIntensity;
 
-  // Rainbow variation across surface (position + time)
-  float rainbowHue = fract(dot(pos, vec3(0.21, 0.37, 0.13)) * 0.4 + uTime * 0.1);
-  vec3 rainbowColor = hsl2rgb(vec3(rainbowHue, 0.82, 0.68));
-  baseColor = mix(baseColor, rainbowColor, uRainbow);
+  vec3 schemeColor = accentColorByScheme(uColorScheme, pos, uTime);
+  baseColor = mix(baseColor, schemeColor, uRainbow);
 
   float diff1 = max(dot(nor, lightPos1), 0.0) * 0.5 + 0.5;
   float diff2 = max(dot(nor, lightPos2), 0.0) * 0.3 + 0.3;
@@ -271,8 +304,13 @@ void main() {
   vec3 ro = vec3(0.0, 0.3, 5.5);  // ray origin
   vec3 rd = normalize(vec3(uv, -1.8));  // ray direction (FOV)
 
-  // Background - light gray gradient
+  // Background: solid gradient or HDRI
   vec3 bgColor = mix(vec3(0.78), vec3(0.82), uv.y + 0.5);
+  if (uUseEnvMap > 0.5) {
+    vec2 envUv = vec2(atan(rd.z, rd.x) * 0.159154943 + 0.5, 0.5 - asin(clamp(rd.y, -1.0, 1.0)) * 0.318309887);
+    bgColor = texture2D(uEnvMap, envUv).rgb;
+    bgColor = bgColor / (bgColor + 1.0); // simple reinhard tone map for HDR
+  }
 
   // Raymarching
   float t = 0.0;
