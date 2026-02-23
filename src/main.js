@@ -412,8 +412,8 @@ function animate() {
     const { bass, bassPeak, mid, high } = audioAnalyzer.getFrequencyData();
 
     const s = controls.sensitivity;
-    const aBass = Math.min(bass * s * 1.4, 1.0);
-    const aBassPeak = Math.min(bassPeak * s * 1.4, 1.0);
+    const aBass = Math.min(bass * s, 1.0);
+    const aBassPeak = Math.min(bassPeak * s, 1.0);
     const aMid = Math.min(mid * s, 1.0);
     const aHigh = Math.min(high * s, 1.0);
 
@@ -422,7 +422,8 @@ function animate() {
     material.uniforms.uMid.value = aMid;
     material.uniforms.uHigh.value = aHigh;
 
-    bassBar.style.background = `linear-gradient(to top, rgba(255, 0, 102, ${aBass}), rgba(255, 102, 153, ${aBass * 0.5}))`;
+    bassBar.style.height = `${aBassPeak * 100}%`;
+    bassBar.style.background = `linear-gradient(to top, rgba(255, 0, 102, ${aBassPeak}), rgba(255, 102, 153, ${aBassPeak * 0.5}))`;
     midBar.style.background = `linear-gradient(to top, rgba(0, 255, 102, ${aMid}), rgba(102, 255, 153, ${aMid * 0.5}))`;
     highBar.style.background = `linear-gradient(to top, rgba(0, 102, 255, ${aHigh}), rgba(102, 153, 255, ${aHigh * 0.5}))`;
 

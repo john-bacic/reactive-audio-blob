@@ -150,8 +150,8 @@ float getBlobRadius(int i, float t) {
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
   float b = clamp(uBassPeak, 0.0, 1.0);
-  float bassKick = pow(b, 0.55);
-  float audioScale = 1.0 + bassKick * 5.8;
+  float bassKick = pow(b, 0.45);
+  float audioScale = 1.0 + bassKick * 7.0;
   base *= audioScale;
 
   return base;
