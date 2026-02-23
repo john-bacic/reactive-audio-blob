@@ -13,10 +13,13 @@ export class AudioAnalyzer {
     this.mid = 0;
     this.high = 0;
     this.bassPeak = 0;
+    this.bassPulse = 0;
 
     this.smoothingFactor = 0.4;
     this.bassSmoothingFactor = 0.55;
     this.bassPeakDecay = 0.88;
+    this.bassPulseDecay = 0.86;
+    this.transientThreshold = 0.09;
     this.prevBass = 0;
     this.prevMid = 0;
     this.prevHigh = 0;
@@ -192,15 +195,22 @@ export class AudioAnalyzer {
 
     this.bassPeak = Math.max(this.bass, this.bassPeak * this.bassPeakDecay);
 
+    const deltaBass = this.bass - this.prevBass;
+    if (deltaBass >= this.transientThreshold && this.bass > 0.06) {
+      this.bassPulse = Math.max(this.bassPulse, Math.min(1, 0.4 + deltaBass * 2));
+    }
+    this.bassPulse *= this.bassPulseDecay;
+
     this.prevBass = this.bass;
     this.prevMid = this.mid;
     this.prevHigh = this.high;
   }
 
   getFrequencyData() {
+    const drive = Math.max(this.bassPeak, this.bassPulse);
     return {
       bass: this.bass,
-      bassPeak: this.bassPeak,
+      bassPeak: drive,
       mid: this.mid,
       high: this.high
     };
@@ -211,6 +221,7 @@ export class AudioAnalyzer {
 
     this.bass = 0;
     this.bassPeak = 0;
+    this.bassPulse = 0;
     this.mid = 0;
     this.high = 0;
     this.prevBass = 0;

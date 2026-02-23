@@ -144,13 +144,14 @@ vec3 getBlobPos(int i, float t) {
   return pos;
 }
 
-// Get animated size for blob i — all blobs use same uBassPeak so they pulse in sync
+// Get animated size for blob i — driven by uBassPeak (peak + transient pulse)
 float getBlobRadius(int i, float t) {
   float fi = float(i);
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
-  float bassKick = sqrt(uBassPeak);
-  float audioScale = 1.0 + bassKick * 4.2;
+  float b = clamp(uBassPeak, 0.0, 1.0);
+  float bassKick = pow(b, 0.55);
+  float audioScale = 1.0 + bassKick * 5.8;
   base *= audioScale;
 
   return base;
