@@ -66,9 +66,7 @@ micBtn.addEventListener('click', async () => {
   }
 });
 
-fileBtn.addEventListener('click', () => {
-  audioFileInput.click();
-});
+// File picker opens natively via <label for="audioFile"> (iOS-friendly)
 
 function formatTime(seconds) {
   const m = Math.floor(seconds / 60);

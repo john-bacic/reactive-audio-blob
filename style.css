@@ -180,6 +180,17 @@ canvas {
   color: #fff;
 }
 
+/* iOS: hide file input without display:none so <label for> can open picker */
+.file-input-ios {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  pointer-events: none;
+}
+
 .status-text {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.4);

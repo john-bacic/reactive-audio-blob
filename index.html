@@ -22,8 +22,8 @@
       <div class="section-header">AUDIO REACTIVE</div>
       <div class="control-group">
         <button id="micBtn" class="control-btn">Microphone</button>
-        <button id="fileBtn" class="control-btn">Upload Audio</button>
-        <input type="file" id="audioFile" accept="audio/*" style="display: none;">
+        <label for="audioFile" id="fileBtn" class="control-btn">Upload Audio</label>
+        <input type="file" id="audioFile" accept="audio/mpeg,audio/mp3,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/ogg,.mp3,.m4a,.wav,.ogg" class="file-input-ios">
       </div>
       <div id="statusText" class="status-text">Click a button to start</div>
       <div id="scrubberContainer" class="scrubber-container" style="display: none;">
