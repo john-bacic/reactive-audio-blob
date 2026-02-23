@@ -19,7 +19,8 @@ export class AudioAnalyzer {
     this.bassSmoothingFactor = 0.55;
     this.bassPeakDecay = 0.88;
     this.bassPulseDecay = 0.86;
-    this.transientThreshold = 0.09;
+    this.transientThresholdBase = 0.05;
+    this.transientSensitivity = 1.5;
     this.prevBass = 0;
     this.prevMid = 0;
     this.prevHigh = 0;
@@ -196,8 +197,11 @@ export class AudioAnalyzer {
     this.bassPeak = Math.max(this.bass, this.bassPeak * this.bassPeakDecay);
 
     const deltaBass = this.bass - this.prevBass;
-    if (deltaBass >= this.transientThreshold && this.bass > 0.06) {
-      this.bassPulse = Math.max(this.bassPulse, Math.min(1, 0.4 + deltaBass * 2));
+    const sens = Math.max(0.2, this.transientSensitivity);
+    const thresh = this.transientThresholdBase / sens;
+    if (deltaBass >= thresh && this.bass > 0.04) {
+      const punch = Math.min(1, 0.35 + deltaBass * 2.2 * sens);
+      this.bassPulse = Math.max(this.bassPulse, punch);
     }
     this.bassPulse *= this.bassPulseDecay;
 

@@ -149,6 +149,7 @@ const controls = {
   glossiness: 0.7,
   spread: 2.0,
   sensitivity: 2.0,
+  transientSensitivity: 1.5,
   baseHue: 0.5,
   baseSat: 0,
   baseLight: 0.92,
@@ -183,6 +184,7 @@ bindSlider('deformation', 'deformation');
 bindSlider('glossiness', 'glossiness');
 bindSlider('spread', 'spread');
 bindSlider('sensitivity', 'sensitivity');
+bindSlider('transientSensitivity', 'transientSensitivity');
 bindSlider('baseHue', 'baseHue');
 bindSlider('baseSat', 'baseSat');
 bindSlider('baseLight', 'baseLight');
@@ -402,6 +404,7 @@ function animate() {
 
   // Audio
   if (isAudioActive) {
+    audioAnalyzer.transientSensitivity = controls.transientSensitivity;
     audioAnalyzer.update();
     const { bass, bassPeak, mid, high } = audioAnalyzer.getFrequencyData();
 
