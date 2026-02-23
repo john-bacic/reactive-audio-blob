@@ -13,7 +13,10 @@ const sidebarToggle = document.getElementById('sidebarToggle');
 const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
 if (sidebar && sidebarToggle) {
   if (isMobile()) sidebar.classList.add('is-hidden');
-  sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('is-hidden'));
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('is-hidden');
+    if (!sidebar.classList.contains('is-hidden')) syncZoomSliderToControl();
+  });
 }
 const sidebarBackdrop = document.getElementById('sidebarBackdrop');
 if (sidebarBackdrop && sidebar) {
@@ -162,13 +165,21 @@ bindSlider('glossiness', 'glossiness');
 bindSlider('spread', 'spread');
 bindSlider('sensitivity', 'sensitivity');
 
+function syncZoomSliderToControl() {
+  const z = controls.zoom;
+  const slider = document.getElementById('zoom');
+  const valueEl = document.getElementById('zoomValue');
+  if (slider) {
+    slider.value = z.toFixed(2);
+    slider.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  if (valueEl) valueEl.textContent = z.toFixed(2);
+}
+
 function updateZoomFromGesture(value) {
   const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, value));
   controls.zoom = z;
-  const slider = document.getElementById('zoom');
-  const valueEl = document.getElementById('zoomValue');
-  if (slider) slider.value = z;
-  if (valueEl) valueEl.textContent = z.toFixed(2);
+  syncZoomSliderToControl();
 }
 
 // Three.js setup - fullscreen quad for raymarching
