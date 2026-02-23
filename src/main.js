@@ -74,24 +74,33 @@ function formatTime(seconds) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+function isAudioFile(file) {
+  if (file.type && file.type.startsWith('audio/')) return true;
+  return /\.(mp3|m4a|wav|ogg|aac|flac|weba|webm|m4b)$/i.test(file.name);
+}
+
 audioFileInput.addEventListener('change', async (e) => {
   const file = e.target.files[0];
-  if (file) {
-    try {
-      fileBtn.classList.add('active');
-      micBtn.classList.remove('active');
-      statusText.textContent = 'Loading audio...';
-      await audioAnalyzer.initAudioFile(file);
-      isAudioActive = true;
-      statusText.textContent = `Playing: ${file.name}`;
-      scrubberContainer.style.display = 'block';
-    } catch (error) {
-      console.error('Audio file error:', error);
-      statusText.textContent = 'Failed to load audio file';
-      fileBtn.classList.remove('active');
-      isAudioActive = false;
-      scrubberContainer.style.display = 'none';
-    }
+  e.target.value = '';
+  if (!file) return;
+  if (!isAudioFile(file)) {
+    statusText.textContent = 'Please choose an audio file (.mp3, .m4a, etc.)';
+    return;
+  }
+  try {
+    fileBtn.classList.add('active');
+    micBtn.classList.remove('active');
+    statusText.textContent = 'Loading audio...';
+    await audioAnalyzer.initAudioFile(file);
+    isAudioActive = true;
+    statusText.textContent = `Playing: ${file.name}`;
+    scrubberContainer.style.display = 'block';
+  } catch (error) {
+    console.error('Audio file error:', error);
+    statusText.textContent = 'Failed to load audio file';
+    fileBtn.classList.remove('active');
+    isAudioActive = false;
+    scrubberContainer.style.display = 'none';
   }
 });
 
