@@ -198,17 +198,22 @@ const material = new THREE.ShaderMaterial({
 const quad = new THREE.Mesh(quadGeometry, material);
 scene.add(quad);
 
-// Touch/mouse drag to pan blobs
+// Touch/mouse drag to pan blobs; tap on blob area closes sidebar
 const container = document.getElementById('container');
+const TAP_THRESHOLD_PX = 10;
 let isDragging = false;
 let lastClientX = 0;
 let lastClientY = 0;
+let pointerDownX = 0;
+let pointerDownY = 0;
 
 function onPointerDown(e) {
   if (e.target !== container) return;
   isDragging = true;
-  lastClientX = e.clientX ?? e.touches[0].clientX;
-  lastClientY = e.clientY ?? e.touches[0].clientY;
+  const x = e.clientX ?? e.touches[0].clientX;
+  const y = e.clientY ?? e.touches[0].clientY;
+  lastClientX = pointerDownX = x;
+  lastClientY = pointerDownY = y;
 }
 function onPointerMove(e) {
   if (!isDragging) return;
@@ -221,7 +226,14 @@ function onPointerMove(e) {
   lastClientY = clientY;
   material.uniforms.uPan.value.set(pan.x, pan.y);
 }
-function onPointerUp() {
+function onPointerUp(e) {
+  if (sidebar && !sidebar.classList.contains('is-hidden')) {
+    const x = e.changedTouches?.[0]?.clientX ?? e.clientX;
+    const y = e.changedTouches?.[0]?.clientY ?? e.clientY;
+    if (x != null && y != null && Math.hypot(x - pointerDownX, y - pointerDownY) < TAP_THRESHOLD_PX) {
+      sidebar.classList.add('is-hidden');
+    }
+  }
   isDragging = false;
 }
 container.addEventListener('mousedown', onPointerDown);
