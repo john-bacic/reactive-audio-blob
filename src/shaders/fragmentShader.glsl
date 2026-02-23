@@ -23,6 +23,7 @@ uniform float uBaseSat;
 uniform float uBaseLight;
 uniform float uShadow;
 uniform float uHighlight;
+uniform float uOpacity;
 
 // HSL to RGB (h,s,l in 0-1)
 vec3 hsl2rgb(vec3 c) {
@@ -180,17 +181,17 @@ float softShadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
   return clamp(res, 0.0, 1.0);
 }
 
-// Ambient occlusion
+// Ambient occlusion (softer to reduce black between blobs)
 float calcAO(vec3 pos, vec3 nor) {
   float occ = 0.0;
   float sca = 1.0;
   for (int i = 0; i < 5; i++) {
-    float h = 0.01 + 0.12 * float(i);
+    float h = 0.01 + 0.10 * float(i);
     float d = sceneSDF(pos + h * nor);
     occ += (h - d) * sca;
-    sca *= 0.95;
+    sca *= 0.92;
   }
-  return clamp(1.0 - 3.0 * occ, 0.0, 1.0);
+  return clamp(1.0 - 1.5 * occ, 0.0, 1.0);
 }
 
 void main() {
@@ -281,8 +282,9 @@ void main() {
   float shadow = softShadow(pos + nor * 0.01, lightPos1, 0.02, 5.0, 16.0);
   shadow = mix(shadow * 0.5 + 0.5, shadow, uShadow * 0.5 + 0.5);
 
-  // Combine
-  vec3 color = diffuse * ao * shadow + specular * shadow + fresnelColor + vec3(sss);
+  // Combine with lifted floor so crevices between blobs aren't fully black
+  float lighting = 0.45 + 0.55 * (ao * shadow);
+  vec3 color = diffuse * lighting + specular * shadow + fresnelColor + vec3(sss);
   color = mix(color, envColor, fresnel * 0.25);
   color += specular * audioIntensity * 0.2;
 
@@ -294,6 +296,9 @@ void main() {
   // Soft edge blend with background (depth fog)
   float fog = 1.0 - smoothstep(8.0, 18.0, t);
   color = mix(bgColor, color, fog);
+
+  // Opacity: blend blob with background
+  color = mix(bgColor, color, uOpacity);
 
   gl_FragColor = vec4(color, 1.0);
 }
