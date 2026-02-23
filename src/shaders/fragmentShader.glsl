@@ -123,16 +123,22 @@ float getBlobRadius(int i, float t) {
   return base;
 }
 
+// Touch offset moves the blobs in view-plane XY (not the camera)
+vec3 touchOffset() {
+  return vec3(uPan.x, uPan.y, 0.0);
+}
+
 // Scene SDF - all metaballs combined
 float sceneSDF(vec3 p) {
   float t = uTime * uAnimSpeed;
   int count = int(uBlobCount);
+  vec3 toff = touchOffset();
 
   float k = uMergeStrength;
   float deformAmt = uDeformation;
 
-  // Start with first blob
-  vec3 pos0 = getBlobPos(0, t);
+  // Start with first blob (positions offset by touch)
+  vec3 pos0 = getBlobPos(0, t) + toff;
   float r0 = getBlobRadius(0, t);
   float d = length(p - pos0) - r0;
 
@@ -144,7 +150,7 @@ float sceneSDF(vec3 p) {
   // Merge remaining blobs
   for (int i = 1; i < 8; i++) {
     if (i >= count) break;
-    vec3 posI = getBlobPos(i, t);
+    vec3 posI = getBlobPos(i, t) + toff;
     float rI = getBlobRadius(i, t);
     float dI = length(p - posI) - rI;
 
@@ -195,7 +201,7 @@ float calcAO(vec3 pos, vec3 nor) {
 }
 
 void main() {
-  vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y + uPan;
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uResolution.xy) / uResolution.y;
   uv /= max(uZoom, 0.01);
 
   // Camera setup
