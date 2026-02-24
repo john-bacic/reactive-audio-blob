@@ -169,7 +169,7 @@ float getBlobRadius(int i, float t) {
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
   float b = clamp(getBandEnvelope(i), 0.0, 1.0);
-  float audioScale = 1.0 + pow(b, 0.5) * 5.0;
+  float audioScale = 1.0 + pow(b, 0.4) * 8.0;
   base *= audioScale;
 
   return base;
