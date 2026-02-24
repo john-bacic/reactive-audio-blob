@@ -127,25 +127,6 @@ float snoise(vec3 v) {
   return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
 }
 
-// Get animated position for blob i
-vec3 getBlobPos(int i, float t) {
-  float fi = float(i);
-  float spread = uSpread;
-
-  // Each blob gets a unique orbit
-  float a1 = fi * 2.399 + 0.5;
-  float a2 = fi * 1.721 + 1.0;
-  float a3 = fi * 3.117 + 0.3;
-
-  vec3 pos = vec3(
-    sin(t * (0.4 + fi * 0.07) + a1) * spread,
-    cos(t * (0.35 + fi * 0.09) + a2) * spread * 0.8,
-    sin(t * (0.25 + fi * 0.05) + a3) * spread * 0.4
-  );
-
-  return pos;
-}
-
 // Read per-blob band envelope from packed vec4 uniforms
 float getBandEnvelope(int i) {
   if (i < 4) {
@@ -160,14 +141,35 @@ float getBandEnvelope(int i) {
   return uBandEnvelopes1.w;
 }
 
-// Each blob pulses to its own frequency band
+// Get animated position for blob i — orbit contracts/expands with band energy
+vec3 getBlobPos(int i, float t) {
+  float fi = float(i);
+  float spread = uSpread;
+
+  float a1 = fi * 2.399 + 0.5;
+  float a2 = fi * 1.721 + 1.0;
+  float a3 = fi * 3.117 + 0.3;
+
+  // Audio drives orbit distance: high energy = blobs pull inward (contract)
+  float b = clamp(getBandEnvelope(i), 0.0, 1.0);
+  float reactivity = 1.0 - pow(b, 0.6) * 0.7;
+
+  vec3 pos = vec3(
+    sin(t * (0.4 + fi * 0.07) + a1) * spread * reactivity,
+    cos(t * (0.35 + fi * 0.09) + a2) * spread * 0.8 * reactivity,
+    sin(t * (0.25 + fi * 0.05) + a3) * spread * 0.4 * reactivity
+  );
+
+  return pos;
+}
+
+// Blob size — subtle swell from audio, main reactivity is in position
 float getBlobRadius(int i, float t) {
   float fi = float(i);
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
   float b = clamp(getBandEnvelope(i), 0.0, 1.0);
-  float kick = pow(b, 0.55);
-  float audioScale = 1.0 + kick * 5.8;
+  float audioScale = 1.0 + b * 1.2;
   base *= audioScale;
 
   return base;
