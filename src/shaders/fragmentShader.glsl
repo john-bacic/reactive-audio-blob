@@ -152,7 +152,7 @@ vec3 getBlobPos(int i, float t) {
 
   // Audio drives orbit distance: high energy = blobs pull inward (contract)
   float b = clamp(getBandEnvelope(i), 0.0, 1.0);
-  float reactivity = 1.0 - pow(b, 0.6) * 0.7;
+  float reactivity = 1.0 - pow(b, 0.45) * 0.85;
 
   vec3 pos = vec3(
     sin(t * (0.4 + fi * 0.07) + a1) * spread * reactivity,
