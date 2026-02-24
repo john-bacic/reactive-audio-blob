@@ -166,8 +166,8 @@ export class AudioAnalyzer {
     this.analyser.getByteFrequencyData(this.dataArray);
     const binHz = this.audioContext.sampleRate / this.fftSize;
     const count = Math.max(1, Math.min(MAX_BANDS, this.bandCount));
-    const bassLo = Math.max(20, this.bassCenter - 10);
-    const bassHi = this.bassCenter + 10;
+    const bassLo = Math.max(20, this.bassCenter - 5);
+    const bassHi = this.bassCenter + 5;
     const edges = buildBandEdges(count, bassLo, bassHi);
 
     for (let b = 0; b < MAX_BANDS; b++) {
@@ -214,8 +214,8 @@ export class AudioAnalyzer {
     }
 
     // Bass/Mid/High bars all use slider centers ±50Hz (same method)
-    const bassBarLo = Math.max(1, Math.floor((this.bassCenter - 10) / binHz));
-    const bassBarHi = Math.min(this.dataArray.length - 1, Math.floor((this.bassCenter + 10) / binHz));
+    const bassBarLo = Math.max(1, Math.floor((this.bassCenter - 5) / binHz));
+    const bassBarHi = Math.min(this.dataArray.length - 1, Math.floor((this.bassCenter + 5) / binHz));
     let bassBarSum = 0;
     for (let i = bassBarLo; i <= bassBarHi; i++) bassBarSum += this.dataArray[i];
     const bassBarAvg = bassBarSum / Math.max(1, bassBarHi - bassBarLo + 1) / 255;
