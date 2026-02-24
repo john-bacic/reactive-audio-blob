@@ -148,7 +148,7 @@ const controls = {
   deformation: 0.3,
   glossiness: 0.7,
   spread: 2.0,
-  sensitivity: 2.0,
+  sensitivity: 0.5,
   bassFreq: 100,
   midFreq: 1000,
   highFreq: 8000,

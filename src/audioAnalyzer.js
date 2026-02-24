@@ -204,9 +204,13 @@ export class AudioAnalyzer {
       this.envelopes[b] = Math.max(0, Math.min(1, this.envelopes[b]));
     }
 
-    this.bass = this.envelopes[0];
-
-    // Mid and High use slider centers ±50Hz
+    // Bass/Mid/High bars all use slider centers ±50Hz (same method)
+    const bassBarLo = Math.max(1, Math.floor((this.bassCenter - 50) / binHz));
+    const bassBarHi = Math.min(this.dataArray.length - 1, Math.floor((this.bassCenter + 50) / binHz));
+    let bassBarSum = 0;
+    for (let i = bassBarLo; i <= bassBarHi; i++) bassBarSum += this.dataArray[i];
+    const bassBarAvg = bassBarSum / Math.max(1, bassBarHi - bassBarLo + 1) / 255;
+    this.bass = bassBarAvg;
     const midLo = Math.max(1, Math.floor((this.midCenter - 50) / binHz));
     const midHi = Math.min(this.dataArray.length - 1, Math.floor((this.midCenter + 50) / binHz));
     let midSum = 0;
