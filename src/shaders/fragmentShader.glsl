@@ -150,9 +150,9 @@ vec3 getBlobPos(int i, float t) {
   float a2 = fi * 1.721 + 1.0;
   float a3 = fi * 3.117 + 0.3;
 
-  // Audio drives orbit distance: high energy = blobs pull inward (contract)
+  // Audio drives orbit distance: high energy = blobs pull inward hard
   float b = clamp(getBandEnvelope(i), 0.0, 1.0);
-  float reactivity = 1.0 - pow(b, 0.45) * 0.85;
+  float reactivity = 1.0 - pow(b, 0.35) * 0.95;
 
   vec3 pos = vec3(
     sin(t * (0.4 + fi * 0.07) + a1) * spread * reactivity,
@@ -163,13 +163,13 @@ vec3 getBlobPos(int i, float t) {
   return pos;
 }
 
-// Blob size — subtle swell from audio, main reactivity is in position
+// Blob size — strong swell from audio on top of position contraction
 float getBlobRadius(int i, float t) {
   float fi = float(i);
   float base = uBlobSize * (0.7 + 0.3 * sin(fi * 1.5 + 0.5));
 
   float b = clamp(getBandEnvelope(i), 0.0, 1.0);
-  float audioScale = 1.0 + b * 1.2;
+  float audioScale = 1.0 + pow(b, 0.5) * 5.0;
   base *= audioScale;
 
   return base;
