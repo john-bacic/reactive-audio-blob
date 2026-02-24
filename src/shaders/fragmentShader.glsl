@@ -261,8 +261,10 @@ vec3 shadeSurface(vec3 pos, vec3 nor, float depthT, vec3 ro, vec3 bgColor) {
   float audioIntensity = uBass;
   baseColor += vec3(uBass * 0.04, uBass * 0.02, uBass * 0.03) * audioIntensity;
 
-  vec3 schemeColor = accentColorByScheme(uColorScheme, pos, uTime);
-  baseColor = mix(baseColor, schemeColor, uRainbow);
+  if (uColorScheme > -0.5) {
+    vec3 schemeColor = accentColorByScheme(uColorScheme, pos, uTime);
+    baseColor = mix(baseColor, schemeColor, uRainbow);
+  }
 
   float diff1 = max(dot(nor, lightPos1), 0.0) * 0.5 + 0.5;
   float diff2 = max(dot(nor, lightPos2), 0.0) * 0.3 + 0.3;
