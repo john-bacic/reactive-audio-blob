@@ -1,15 +1,17 @@
 const MAX_BANDS = 8;
 
 // Frequency range edges (Hz) - logarithmically spaced from 40Hz to 12kHz
-const FREQ_MIN = 40;
+const BASS_MIN = 80;
+const BASS_MAX = 120;
 const FREQ_MAX = 12000;
 
 function buildBandEdges(count) {
-  const edges = [];
-  const logMin = Math.log(FREQ_MIN);
+  const edges = [BASS_MIN, BASS_MAX];
+  if (count <= 1) return edges;
+  const logMin = Math.log(BASS_MAX);
   const logMax = Math.log(FREQ_MAX);
-  for (let i = 0; i <= count; i++) {
-    edges.push(Math.exp(logMin + (logMax - logMin) * (i / count)));
+  for (let i = 1; i < count; i++) {
+    edges.push(Math.exp(logMin + (logMax - logMin) * (i / (count - 1))));
   }
   return edges;
 }
