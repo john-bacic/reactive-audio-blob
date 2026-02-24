@@ -47,6 +47,21 @@
           <div class="bar-track"><div class="bar-fill" id="highBar"></div></div>
         </div>
       </div>
+      <div class="slider-row" style="margin-top: 8px;">
+        <label>BASS Hz</label>
+        <input type="range" id="bassFreq" min="30" max="200" step="1" value="100">
+        <span class="slider-value" id="bassFreqValue">100</span>
+      </div>
+      <div class="slider-row">
+        <label>MID Hz</label>
+        <input type="range" id="midFreq" min="200" max="4000" step="10" value="1000">
+        <span class="slider-value" id="midFreqValue">1000</span>
+      </div>
+      <div class="slider-row">
+        <label>HIGH Hz</label>
+        <input type="range" id="highFreq" min="2000" max="16000" step="100" value="8000">
+        <span class="slider-value" id="highFreqValue">8000</span>
+      </div>
 
       <div class="slider-row" style="margin-top: 10px;">
         <label>SENSITIVITY</label>

@@ -149,6 +149,9 @@ const controls = {
   glossiness: 0.7,
   spread: 2.0,
   sensitivity: 2.0,
+  bassFreq: 100,
+  midFreq: 1000,
+  highFreq: 8000,
   pulseAttack: 0.85,
   pulseRelease: 0.35,
   baseHue: 0.5,
@@ -164,15 +167,17 @@ const controls = {
 };
 
 // Bind sliders to controls
+const INT_SLIDERS = new Set(['bassFreq', 'midFreq', 'highFreq']);
 function bindSlider(id, key) {
   const slider = document.getElementById(id);
   const valueEl = document.getElementById(id + 'Value');
   if (!slider) return;
+  const fmt = INT_SLIDERS.has(id) ? (v) => Math.round(v).toString() : (v) => parseFloat(v).toFixed(2);
   slider.value = controls[key];
-  valueEl.textContent = parseFloat(controls[key]).toFixed(2);
+  valueEl.textContent = fmt(controls[key]);
   slider.addEventListener('input', () => {
     controls[key] = parseFloat(slider.value);
-    valueEl.textContent = parseFloat(slider.value).toFixed(2);
+    valueEl.textContent = fmt(slider.value);
   });
 }
 
@@ -185,6 +190,9 @@ bindSlider('deformation', 'deformation');
 bindSlider('glossiness', 'glossiness');
 bindSlider('spread', 'spread');
 bindSlider('sensitivity', 'sensitivity');
+bindSlider('bassFreq', 'bassFreq');
+bindSlider('midFreq', 'midFreq');
+bindSlider('highFreq', 'highFreq');
 bindSlider('pulseAttack', 'pulseAttack');
 bindSlider('pulseRelease', 'pulseRelease');
 bindSlider('baseHue', 'baseHue');
@@ -409,6 +417,9 @@ function animate() {
   // Audio
   if (isAudioActive) {
     audioAnalyzer.bandCount = Math.round(controls.blobCount);
+    audioAnalyzer.bassCenter = controls.bassFreq;
+    audioAnalyzer.midCenter = controls.midFreq;
+    audioAnalyzer.highCenter = controls.highFreq;
     audioAnalyzer.pulseAttackCoeff = 0.2 + 0.75 * controls.pulseAttack;
     audioAnalyzer.pulseReleaseCoeff = 0.03 + 0.45 * (1 - controls.pulseRelease);
     audioAnalyzer.update();

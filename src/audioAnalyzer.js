@@ -1,15 +1,13 @@
 const MAX_BANDS = 8;
 
 // Frequency range edges (Hz) - logarithmically spaced from 40Hz to 12kHz
-const BASS_MIN = 80;
-const BASS_MAX = 120;
-const FREQ_MAX = 12000;
+const MAX_FREQ = 16000;
 
-function buildBandEdges(count) {
-  const edges = [BASS_MIN, BASS_MAX];
+function buildBandEdges(count, bassLo, bassHi) {
+  const edges = [bassLo, bassHi];
   if (count <= 1) return edges;
-  const logMin = Math.log(BASS_MAX);
-  const logMax = Math.log(FREQ_MAX);
+  const logMin = Math.log(bassHi);
+  const logMax = Math.log(MAX_FREQ);
   for (let i = 1; i < count; i++) {
     edges.push(Math.exp(logMin + (logMax - logMin) * (i / (count - 1))));
   }
@@ -34,6 +32,10 @@ export class AudioAnalyzer {
     this.bass = 0;
     this.mid = 0;
     this.high = 0;
+
+    this.bassCenter = 100;
+    this.midCenter = 1000;
+    this.highCenter = 8000;
 
     this.smoothingFactor = 0.4;
     this.pulseAttackCoeff = 0.85;
@@ -164,7 +166,9 @@ export class AudioAnalyzer {
     this.analyser.getByteFrequencyData(this.dataArray);
     const binHz = this.audioContext.sampleRate / this.fftSize;
     const count = Math.max(1, Math.min(MAX_BANDS, this.bandCount));
-    const edges = buildBandEdges(count);
+    const bassLo = Math.max(20, this.bassCenter - 50);
+    const bassHi = this.bassCenter + 50;
+    const edges = buildBandEdges(count, bassLo, bassHi);
 
     for (let b = 0; b < MAX_BANDS; b++) {
       if (b >= count) {
@@ -200,20 +204,20 @@ export class AudioAnalyzer {
       this.envelopes[b] = Math.max(0, Math.min(1, this.envelopes[b]));
     }
 
-    // Legacy bass/mid/high for frequency bars
     this.bass = this.envelopes[0];
 
-    const midStart = Math.floor(250 / binHz);
-    const midEnd = Math.floor(2000 / binHz);
+    // Mid and High use slider centers ±50Hz
+    const midLo = Math.max(1, Math.floor((this.midCenter - 50) / binHz));
+    const midHi = Math.min(this.dataArray.length - 1, Math.floor((this.midCenter + 50) / binHz));
     let midSum = 0;
-    for (let i = midStart; i < midEnd; i++) midSum += this.dataArray[i];
-    const midAvg = midSum / Math.max(1, midEnd - midStart) / 255;
+    for (let i = midLo; i <= midHi; i++) midSum += this.dataArray[i];
+    const midAvg = midSum / Math.max(1, midHi - midLo + 1) / 255;
 
-    const highStart = midEnd;
-    const highEnd = Math.min(this.dataArray.length - 1, Math.floor(8000 / binHz));
+    const highLo = Math.max(1, Math.floor((this.highCenter - 50) / binHz));
+    const highHi = Math.min(this.dataArray.length - 1, Math.floor((this.highCenter + 50) / binHz));
     let highSum = 0;
-    for (let i = highStart; i < highEnd; i++) highSum += this.dataArray[i];
-    const highAvg = highSum / Math.max(1, highEnd - highStart) / 255;
+    for (let i = highLo; i <= highHi; i++) highSum += this.dataArray[i];
+    const highAvg = highSum / Math.max(1, highHi - highLo + 1) / 255;
 
     this.mid = this.smoothingFactor * this.prevMid + (1 - this.smoothingFactor) * midAvg;
     this.high = this.smoothingFactor * this.prevHigh + (1 - this.smoothingFactor) * highAvg;
