@@ -142,7 +142,7 @@ const ZOOM_MIN = 0.1, ZOOM_MAX = 3;
 const controls = {
   zoom: 1,
   blobCount: 4,
-  blobSize: 0.8,
+  blobSize: 0.1,
   mergeStrength: 0.7,
   animSpeed: 1.0,
   deformation: 0.3,
