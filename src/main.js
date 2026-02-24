@@ -447,13 +447,17 @@ function animate() {
       Math.min(e[6] * s, 1), Math.min(e[7] * s, 1)
     );
 
-    // Visualizer bars reflect the Bass/Mid/High Hz slider ranges
-    bassBar.style.width = `${aBass * 100}%`;
-    bassBar.style.background = `rgba(255, 0, 102, ${0.4 + aBass * 0.6})`;
-    midBar.style.width = `${aMid * 100}%`;
-    midBar.style.background = `rgba(0, 255, 102, ${0.4 + aMid * 0.6})`;
-    highBar.style.width = `${aHigh * 100}%`;
-    highBar.style.background = `rgba(0, 102, 255, ${0.4 + aHigh * 0.6})`;
+    // Bars show the same per-band envelopes that drive the blobs
+    const count = Math.round(controls.blobCount);
+    const eBass = Math.min(e[0] * s, 1);
+    const eMid = count >= 3 ? Math.min(e[Math.floor(count / 2)] * s, 1) : Math.min(e[Math.min(1, count - 1)] * s, 1);
+    const eHigh = count >= 2 ? Math.min(e[count - 1] * s, 1) : eBass;
+    bassBar.style.width = `${eBass * 100}%`;
+    bassBar.style.background = `rgba(255, 0, 102, ${0.4 + eBass * 0.6})`;
+    midBar.style.width = `${eMid * 100}%`;
+    midBar.style.background = `rgba(0, 255, 102, ${0.4 + eMid * 0.6})`;
+    highBar.style.width = `${eHigh * 100}%`;
+    highBar.style.background = `rgba(0, 102, 255, ${0.4 + eHigh * 0.6})`;
 
     // Update scrubber
     const audio = audioAnalyzer.audioElement;
