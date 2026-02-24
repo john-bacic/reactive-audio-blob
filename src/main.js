@@ -436,10 +436,12 @@ function animate() {
       Math.min(e[6] * s, 1), Math.min(e[7] * s, 1)
     );
 
-    bassBar.style.height = `${aBassPeak * 100}%`;
-    bassBar.style.background = `linear-gradient(to top, rgba(255, 0, 102, ${aBassPeak}), rgba(255, 102, 153, ${aBassPeak * 0.5}))`;
-    midBar.style.background = `linear-gradient(to top, rgba(0, 255, 102, ${aMid}), rgba(102, 255, 153, ${aMid * 0.5}))`;
-    highBar.style.background = `linear-gradient(to top, rgba(0, 102, 255, ${aHigh}), rgba(102, 153, 255, ${aHigh * 0.5}))`;
+    bassBar.style.width = `${aBassPeak * 100}%`;
+    bassBar.style.background = `rgba(255, 0, 102, ${0.4 + aBassPeak * 0.6})`;
+    midBar.style.width = `${aMid * 100}%`;
+    midBar.style.background = `rgba(0, 255, 102, ${0.4 + aMid * 0.6})`;
+    highBar.style.width = `${aHigh * 100}%`;
+    highBar.style.background = `rgba(0, 102, 255, ${0.4 + aHigh * 0.6})`;
 
     // Update scrubber
     const audio = audioAnalyzer.audioElement;
