@@ -183,16 +183,25 @@ export class AudioAnalyzer {
       const hiBin = Math.min(this.dataArray.length - 1, Math.floor(hiHz / binHz));
 
       let sum = 0;
+      let peak = 0;
       let n = 0;
       for (let i = loBin; i <= hiBin; i++) {
         sum += this.dataArray[i];
+        if (this.dataArray[i] > peak) peak = this.dataArray[i];
         n++;
       }
       const avg = n > 0 ? (sum / n / 255) : 0;
+      const peakNorm = peak / 255;
 
-      // Lower bands get more gain (bass is quieter in FFT)
-      const boostFactor = 1.0 + Math.max(0, 1.5 - b * 0.3);
-      this.bands[b] = Math.min(1, avg * boostFactor);
+      // Bass (band 0): use peak + average blend with strong boost
+      // Higher bands: average with moderate boost
+      if (b === 0) {
+        const blended = peakNorm * 0.6 + avg * 0.4;
+        this.bands[b] = Math.min(1, blended * 3.5);
+      } else {
+        const boostFactor = 1.0 + Math.max(0, 1.2 - b * 0.25);
+        this.bands[b] = Math.min(1, avg * boostFactor);
+      }
 
       // Envelope follower per band
       const target = this.bands[b];

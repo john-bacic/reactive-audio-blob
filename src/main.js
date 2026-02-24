@@ -436,10 +436,10 @@ function animate() {
     material.uniforms.uMid.value = aMid;
     material.uniforms.uHigh.value = aHigh;
 
-    // Pack per-band envelopes into two vec4 uniforms (scaled by sensitivity)
+    // Pack per-band envelopes — bass (band 0) bypasses sensitivity for punch
     const e = envelopes;
     material.uniforms.uBandEnvelopes0.value.set(
-      Math.min(e[0] * s, 1), Math.min(e[1] * s, 1),
+      Math.min(e[0], 1), Math.min(e[1] * s, 1),
       Math.min(e[2] * s, 1), Math.min(e[3] * s, 1)
     );
     material.uniforms.uBandEnvelopes1.value.set(
@@ -447,17 +447,16 @@ function animate() {
       Math.min(e[6] * s, 1), Math.min(e[7] * s, 1)
     );
 
-    // Bars show the same per-band envelopes that drive the blobs
-    const count = Math.round(controls.blobCount);
-    const eBass = Math.min(e[0] * s, 1);
-    const eMid = count >= 3 ? Math.min(e[Math.floor(count / 2)] * s, 1) : Math.min(e[Math.min(1, count - 1)] * s, 1);
-    const eHigh = count >= 2 ? Math.min(e[count - 1] * s, 1) : eBass;
-    bassBar.style.width = `${eBass * 100}%`;
-    bassBar.style.background = `rgba(255, 0, 102, ${0.4 + eBass * 0.6})`;
-    midBar.style.width = `${eMid * 100}%`;
-    midBar.style.background = `rgba(0, 255, 102, ${0.4 + eMid * 0.6})`;
-    highBar.style.width = `${eHigh * 100}%`;
-    highBar.style.background = `rgba(0, 102, 255, ${0.4 + eHigh * 0.6})`;
+    // Bars use bass/mid/high which respond to the Hz sliders
+    const vBass = Math.min(bass * 2.5, 1);
+    const vMid = Math.min(mid * s * 2, 1);
+    const vHigh = Math.min(high * s * 2, 1);
+    bassBar.style.width = `${vBass * 100}%`;
+    bassBar.style.background = `rgba(255, 0, 102, ${0.4 + vBass * 0.6})`;
+    midBar.style.width = `${vMid * 100}%`;
+    midBar.style.background = `rgba(0, 255, 102, ${0.4 + vMid * 0.6})`;
+    highBar.style.width = `${vHigh * 100}%`;
+    highBar.style.background = `rgba(0, 102, 255, ${0.4 + vHigh * 0.6})`;
 
     // Update scrubber
     const audio = audioAnalyzer.audioElement;
